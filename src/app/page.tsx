@@ -10,7 +10,7 @@ export default function Home() {
   const [documents, setDocuments] = useState<DocumentMeta[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Closed by default on mobile
 
   useEffect(() => {
     fetch("/api/documents")
@@ -27,18 +27,34 @@ export default function Home() {
     setSelectedDoc(doc);
   };
 
+  const handleSelectOnMobile = (slug: string) => {
+    handleSelectDocument(slug);
+    // Close sidebar on mobile after selection
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
     <div className="h-screen flex overflow-hidden">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={`${
-          sidebarOpen ? "w-72" : "w-0"
-        } transition-all duration-200 flex-shrink-0 border-r border-[--border] bg-[--bg-secondary] overflow-hidden`}
+          sidebarOpen ? "w-72 translate-x-0" : "w-0 -translate-x-full md:translate-x-0"
+        } fixed md:relative z-50 h-full transition-all duration-200 flex-shrink-0 border-r border-[--border] bg-[--bg-secondary] overflow-hidden`}
       >
         <Sidebar
           documents={documents}
           selectedSlug={selectedDoc?.slug}
-          onSelect={handleSelectDocument}
+          onSelect={handleSelectOnMobile}
           loading={loading}
         />
       </aside>
@@ -46,26 +62,26 @@ export default function Home() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="h-12 flex items-center px-4 border-b border-[--border] bg-[--bg-secondary] flex-shrink-0">
+        <header className="h-14 md:h-12 flex items-center px-4 border-b border-[--border] bg-[--bg-secondary] flex-shrink-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 rounded hover:bg-[--bg-tertiary] text-[--text-secondary] mr-3"
+            className="p-2 md:p-1.5 rounded hover:bg-[--bg-tertiary] text-[--text-secondary] mr-3 -ml-1"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <div className="flex items-center gap-2">
-            <span className="text-lg">🧠</span>
-            <h1 className="font-semibold text-[--text-primary]">2nd Brain</h1>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-lg flex-shrink-0">🧠</span>
+            <h1 className="font-semibold text-[--text-primary] hidden sm:block">2nd Brain</h1>
           </div>
           {selectedDoc && (
-            <>
-              <span className="mx-3 text-[--text-muted]">/</span>
-              <span className="text-sm text-[--text-secondary] capitalize">{selectedDoc.category}</span>
-              <span className="mx-2 text-[--text-muted]">/</span>
-              <span className="text-sm text-[--text-primary]">{selectedDoc.title}</span>
-            </>
+            <div className="flex items-center min-w-0 overflow-hidden ml-2">
+              <span className="mx-2 text-[--text-muted] hidden sm:inline">/</span>
+              <span className="text-sm text-[--text-secondary] capitalize hidden md:inline">{selectedDoc.category}</span>
+              <span className="mx-2 text-[--text-muted] hidden md:inline">/</span>
+              <span className="text-sm text-[--text-primary] truncate">{selectedDoc.title}</span>
+            </div>
           )}
         </header>
 

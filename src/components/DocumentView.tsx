@@ -72,7 +72,7 @@ export function DocumentView({ document }: DocumentViewProps) {
   }, [document.content]);
 
   return (
-    <article className="max-w-3xl mx-auto px-8 py-12 animate-fade-in">
+    <article className="max-w-3xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-12 animate-fade-in">
       {/* Meta */}
       <div className="mb-8 pb-6 border-b border-[--border]">
         <div className="flex items-center gap-2 text-sm text-[--text-muted] mb-2">
