@@ -1,19 +1,28 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
+const jakarta = Plus_Jakarta_Sans({ 
+  subsets: ["latin"], 
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700"]
+});
+
+const jetbrains = JetBrains_Mono({ 
+  subsets: ["latin"], 
+  variable: "--font-mono" 
+});
 
 export const metadata: Metadata = {
-  title: "2nd Brain | Arie's Knowledge Base",
-  description: "A personal knowledge base and document viewer",
+  title: "2nd Brain | Knowledge & Tasks",
+  description: "Personal knowledge base and task management",
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#0d0d0d",
+  maximumScale: 1,
+  themeColor: "#0c1117",
 };
 
 export default function RootLayout({
@@ -22,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrains.variable}`}>
+    <html lang="nl" className={`${jakarta.variable} ${jetbrains.variable}`}>
       <body className="antialiased">{children}</body>
     </html>
   );

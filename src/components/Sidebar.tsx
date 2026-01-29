@@ -57,11 +57,11 @@ export function Sidebar({ documents, selectedSlug, onSelect, loading }: SidebarP
 
   if (loading) {
     return (
-      <div className="p-4">
-        <div className="h-8 bg-[--bg-tertiary] rounded animate-pulse mb-4" />
+      <div className="p-4 space-y-3">
+        <div className="h-10 skeleton" />
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-10 bg-[--bg-tertiary] rounded animate-pulse" />
+            <div key={i} className="h-14 skeleton" style={{ animationDelay: `${i * 0.1}s` }} />
           ))}
         </div>
       </div>
@@ -71,7 +71,7 @@ export function Sidebar({ documents, selectedSlug, onSelect, loading }: SidebarP
   return (
     <div className="flex flex-col h-full">
       {/* Search */}
-      <div className="p-3 border-b border-[--border]">
+      <div className="p-3">
         <div className="relative">
           <svg
             className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[--text-muted]"
@@ -91,21 +91,21 @@ export function Sidebar({ documents, selectedSlug, onSelect, loading }: SidebarP
             placeholder="Zoeken..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-[--bg-tertiary] border border-[--border] rounded-lg text-sm text-[--text-primary] placeholder:text-[--text-muted] focus:outline-none focus:border-[--accent]"
+            className="w-full pl-10 pr-4 py-2.5 bg-[#0c1117] border border-[#1e2730] rounded-xl text-sm text-[--text-primary] placeholder:text-[--text-muted] focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/25 transition-all"
           />
         </div>
       </div>
 
       {/* Document List */}
-      <div className="flex-1 overflow-y-auto p-2">
-        {CATEGORY_ORDER.filter((cat) => groupedDocs[cat]?.length).map((category) => (
-          <div key={category} className="mb-2">
+      <div className="flex-1 overflow-y-auto px-2 pb-2">
+        {CATEGORY_ORDER.filter((cat) => groupedDocs[cat]?.length).map((category, catIndex) => (
+          <div key={category} className="mb-1 animate-fade-in" style={{ animationDelay: `${catIndex * 0.05}s` }}>
             <button
               onClick={() => toggleCategory(category)}
-              className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-[--text-secondary] hover:text-[--text-primary] rounded hover:bg-[--bg-tertiary]"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[--text-secondary] hover:text-[--text-primary] rounded-lg hover:bg-[#1a2129] transition-colors"
             >
               <svg
-                className={`w-3 h-3 transition-transform ${
+                className={`w-3 h-3 transition-transform duration-200 ${
                   expandedCategories.has(category) ? "rotate-90" : ""
                 }`}
                 fill="currentColor"
@@ -113,29 +113,34 @@ export function Sidebar({ documents, selectedSlug, onSelect, loading }: SidebarP
               >
                 <path d="M6 6L14 10L6 14V6Z" />
               </svg>
-              <span>{CATEGORY_ICONS[category] || "📄"}</span>
+              <span className="text-base">{CATEGORY_ICONS[category] || "📄"}</span>
               <span className="capitalize font-medium">{category}</span>
-              <span className="ml-auto text-xs text-[--text-muted]">
+              <span className="ml-auto text-xs text-[--text-muted] bg-[#1a2129] px-2 py-0.5 rounded-full">
                 {groupedDocs[category].length}
               </span>
             </button>
 
             {expandedCategories.has(category) && (
-              <div className="ml-4 mt-1 space-y-0.5">
-                {groupedDocs[category].map((doc) => (
+              <div className="ml-3 mt-1 space-y-0.5 border-l border-[#1e2730] pl-2">
+                {groupedDocs[category].map((doc, docIndex) => (
                   <button
                     key={doc.slug}
                     onClick={() => onSelect(doc.slug)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                      selectedSlug === doc.slug
-                        ? "bg-[--accent] text-white"
-                        : "text-[--text-secondary] hover:bg-[--bg-tertiary] hover:text-[--text-primary]"
-                    }`}
+                    className={`
+                      w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-200
+                      animate-fade-in
+                      ${
+                        selectedSlug === doc.slug
+                          ? "bg-gradient-to-r from-amber-500/20 to-orange-500/10 text-amber-400 border-l-2 border-amber-500 -ml-[2px] pl-[14px]"
+                          : "text-[--text-secondary] hover:bg-[#1a2129] hover:text-[--text-primary]"
+                      }
+                    `}
+                    style={{ animationDelay: `${(catIndex * 0.05) + (docIndex * 0.03)}s` }}
                   >
                     <div className="font-medium truncate">{doc.title}</div>
                     <div
                       className={`text-xs truncate mt-0.5 ${
-                        selectedSlug === doc.slug ? "text-white/70" : "text-[--text-muted]"
+                        selectedSlug === doc.slug ? "text-amber-500/60" : "text-[--text-muted]"
                       }`}
                     >
                       {formatDate(doc.updatedAt)}
@@ -148,7 +153,7 @@ export function Sidebar({ documents, selectedSlug, onSelect, loading }: SidebarP
         ))}
 
         {filteredDocs.length === 0 && (
-          <div className="text-center py-8 text-[--text-muted] text-sm">
+          <div className="text-center py-12 text-[--text-muted] text-sm">
             {search ? "Geen documenten gevonden" : "Nog geen documenten"}
           </div>
         )}
