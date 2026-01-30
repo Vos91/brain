@@ -1,5 +1,7 @@
 "use client";
 
+import { ArieFox } from "./arie/ArieFox";
+
 interface WelcomeViewProps {
   documentCount: number;
 }
@@ -8,7 +10,9 @@ export function WelcomeView({ documentCount }: WelcomeViewProps) {
   return (
     <div className="flex items-center justify-center h-full">
       <div className="text-center max-w-md px-8 animate-fade-in">
-        <div className="text-6xl mb-6">🧠</div>
+        <div className="mb-6 flex justify-center">
+          <ArieFox state="idle" size={120} />
+        </div>
         <h1 className="text-2xl font-bold text-[--text-primary] mb-3">
           Welkom in mijn 2nd Brain
         </h1>

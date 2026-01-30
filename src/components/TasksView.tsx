@@ -8,6 +8,7 @@ import { TaskModal } from "./TaskModal";
 import { AddTaskForm } from "./AddTaskForm";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { FloatingAddButton } from "./FloatingAddButton";
+import { ArieFox } from "./arie/ArieFox";
 import { NL } from "@/lib/constants";
 
 export function TasksView() {
@@ -176,15 +177,17 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key`}
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-[var(--text-muted)]">Laden...</div>
+      <div className="flex-1 flex flex-col items-center justify-center gap-4">
+        <ArieFox state="thinking" size={80} />
+        <div className="text-[var(--text-muted)]">Taken laden...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 gap-4">
+        <ArieFox state="sleeping" size={80} />
         <div className="text-center">
           <p className="text-rose-400 mb-2">⚠️ {error}</p>
           <p className="text-[var(--text-muted)] text-sm">
