@@ -27,16 +27,31 @@ interface TaskBoardProps {
 
 type CollapsedState = Record<'todo' | 'in-progress' | 'complete', boolean>;
 
+// Helper to safely get localStorage (SSR-safe)
+const getInitialCollapsed = (): CollapsedState => {
+  if (typeof window === 'undefined') return { todo: false, "in-progress": false, complete: false };
+  try {
+    const saved = localStorage.getItem("brainColumnCollapsed");
+    return saved ? JSON.parse(saved) : { todo: false, "in-progress": false, complete: false };
+  } catch {
+    return { todo: false, "in-progress": false, complete: false };
+  }
+};
+
+const getInitialColumn = (): number => {
+  if (typeof window === 'undefined') return 0;
+  const saved = localStorage.getItem("brainActiveColumn");
+  if (saved) {
+    const index = parseInt(saved, 10);
+    if (!isNaN(index) && index >= 0 && index < 3) return index;
+  }
+  return 0;
+};
+
 export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArchiveAllComplete }: TaskBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
-  const [collapsedColumns, setCollapsedColumns] = useState<CollapsedState>({
-    todo: false,
-    "in-progress": false,
-    complete: false,
-  });
-
-  // Mobile: active column index for tabbed view
-  const [activeColumnIndex, setActiveColumnIndex] = useState(0);
+  const [collapsedColumns, setCollapsedColumns] = useState<CollapsedState>(getInitialCollapsed);
+  const [activeColumnIndex, setActiveColumnIndex] = useState(getInitialColumn);
   const [isMobile, setIsMobile] = useState(false);
 
   // Touch/swipe handling
@@ -52,26 +67,6 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  // Load collapsed state from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("brainColumnCollapsed");
-    if (saved) {
-      try {
-        setCollapsedColumns(JSON.parse(saved));
-      } catch {
-        // Ignore
-      }
-    }
-
-    const savedColumn = localStorage.getItem("brainActiveColumn");
-    if (savedColumn) {
-      const index = parseInt(savedColumn, 10);
-      if (!isNaN(index) && index >= 0 && index < STATUSES.length) {
-        setActiveColumnIndex(index);
-      }
-    }
   }, []);
 
   const handleColumnChange = useCallback((index: number) => {
