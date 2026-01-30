@@ -282,6 +282,13 @@ export default function Home() {
               {activeView === "documents" ? "📄" : "✅"}
             </span>
           </div>
+
+          {/* Keyboard shortcut hint - desktop only */}
+          <div className="ml-auto hidden sm:flex items-center gap-2">
+            <span className="text-xs text-[--text-muted]">
+              Druk <kbd className="px-1.5 py-0.5 bg-[#1a2129] border border-[#2a3441] rounded text-[--text-secondary]">?</kbd> voor sneltoetsen
+            </span>
+          </div>
         </header>
 
         {/* Content Area */}

@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Task, TaskStatus } from "@/types";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { TaskBoard } from "./TaskBoard";
 import { TaskModal } from "./TaskModal";
 import { AddTaskForm } from "./AddTaskForm";
+import { KeyboardShortcuts } from "./KeyboardShortcuts";
+import { FloatingAddButton } from "./FloatingAddButton";
 import { NL } from "@/lib/constants";
 
 export function TasksView() {
@@ -141,6 +143,11 @@ export function TasksView() {
     }
   };
 
+  // Keyboard shortcut handler
+  const handleNewTaskShortcut = useCallback(() => {
+    setShowAddForm(true);
+  }, []);
+
   // Not configured state
   if (!isConfigured) {
     return (
@@ -190,6 +197,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key`}
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
+      {/* Keyboard shortcuts */}
+      <KeyboardShortcuts onNewTask={handleNewTaskShortcut} />
+
       {/* Add task button / form */}
       <div className="p-4 pb-0">
         {showAddForm ? (
@@ -200,7 +210,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key`}
         ) : (
           <button
             onClick={() => setShowAddForm(true)}
-            className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] rounded-lg transition-colors font-medium"
+            className="hidden md:flex items-center gap-2 px-4 py-3 bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] rounded-lg transition-colors font-medium"
           >
             <svg
               className="w-5 h-5"
@@ -216,6 +226,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key`}
               />
             </svg>
             {NL.addTask}
+            <kbd className="ml-2 px-1.5 py-0.5 bg-white/20 rounded text-xs">N</kbd>
           </button>
         )}
       </div>
@@ -226,6 +237,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key`}
         onMoveTask={handleMoveTask}
         onTaskClick={handleTaskClick}
       />
+
+      {/* Floating action button - mobile only */}
+      {!showAddForm && (
+        <FloatingAddButton onClick={() => setShowAddForm(true)} />
+      )}
 
       {/* Task modal */}
       <TaskModal
