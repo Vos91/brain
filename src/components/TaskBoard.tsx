@@ -21,11 +21,13 @@ interface TaskBoardProps {
   tasks: Task[];
   onMoveTask: (taskId: string, newStatus: TaskStatus) => void;
   onTaskClick: (task: Task) => void;
+  onArchiveTask: (taskId: string) => void;
+  onArchiveAllComplete: () => void;
 }
 
-type CollapsedState = Record<TaskStatus, boolean>;
+type CollapsedState = Record<'todo' | 'in-progress' | 'complete', boolean>;
 
-export function TaskBoard({ tasks, onMoveTask, onTaskClick }: TaskBoardProps) {
+export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArchiveAllComplete }: TaskBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<CollapsedState>({
     todo: false,
@@ -77,7 +79,7 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick }: TaskBoardProps) {
     localStorage.setItem("brainActiveColumn", index.toString());
   }, []);
 
-  const toggleColumnCollapse = (statusId: TaskStatus) => {
+  const toggleColumnCollapse = (statusId: 'todo' | 'in-progress' | 'complete') => {
     setCollapsedColumns((prev) => {
       const newState = { ...prev, [statusId]: !prev[statusId] };
       localStorage.setItem("brainColumnCollapsed", JSON.stringify(newState));
@@ -243,6 +245,8 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick }: TaskBoardProps) {
               isCollapsed={false}
               onToggleCollapse={() => {}}
               isMobile={true}
+              onArchiveTask={onArchiveTask}
+              onArchiveAll={onArchiveAllComplete}
             />
           </div>
 
@@ -272,19 +276,24 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick }: TaskBoardProps) {
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-4 p-6 overflow-x-auto h-full">
-        {STATUSES.map((status) => (
-          <TaskColumn
-            key={status.id}
-            id={status.id}
-            title={status.label}
-            emoji={status.emoji}
-            tasks={getTasksByStatus(status.id)}
-            onTaskClick={onTaskClick}
-            isCollapsed={collapsedColumns[status.id]}
-            onToggleCollapse={() => toggleColumnCollapse(status.id)}
-            isMobile={false}
-          />
-        ))}
+        {STATUSES.map((status) => {
+          const statusId = status.id as 'todo' | 'in-progress' | 'complete';
+          return (
+            <TaskColumn
+              key={status.id}
+              id={status.id}
+              title={status.label}
+              emoji={status.emoji}
+              tasks={getTasksByStatus(status.id)}
+              onTaskClick={onTaskClick}
+              isCollapsed={collapsedColumns[statusId]}
+              onToggleCollapse={() => toggleColumnCollapse(statusId)}
+              isMobile={false}
+              onArchiveTask={onArchiveTask}
+              onArchiveAll={onArchiveAllComplete}
+            />
+          );
+        })}
       </div>
 
       <DragOverlay>

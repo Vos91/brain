@@ -16,9 +16,10 @@ import {
 interface TaskCardProps {
   task: Task;
   onClick: () => void;
+  onArchive?: () => void;
 }
 
-export function TaskCard({ task, onClick }: TaskCardProps) {
+export function TaskCard({ task, onClick, onArchive }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -71,19 +72,35 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
         ${isDragging ? "opacity-50 shadow-2xl scale-[1.02] rotate-1" : ""}
       `}
     >
-      {/* Header row: title + priority */}
-      <div className="flex items-start justify-between gap-3 mb-2">
+      {/* Header row: title + priority + archive */}
+      <div className="flex items-start justify-between gap-2 mb-2">
         <h4 className="text-sm font-medium text-[--text-primary] leading-snug flex-1 min-w-0 group-hover:text-white transition-colors">
           {task.title}
         </h4>
-        <span
-          className={`
-            text-xs px-2 py-1 rounded-lg border font-medium flex-shrink-0
-            ${PRIORITY_COLORS[task.priority]}
-          `}
-        >
-          {priorityInfo?.label || task.priority}
-        </span>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {onArchive && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onArchive();
+              }}
+              className="opacity-0 group-hover:opacity-100 p-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-tertiary)] rounded-lg transition-all"
+              title={NL.archive}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
+            </button>
+          )}
+          <span
+            className={`
+              text-xs px-2 py-1 rounded-lg border font-medium
+              ${PRIORITY_COLORS[task.priority]}
+            `}
+          >
+            {priorityInfo?.label || task.priority}
+          </span>
+        </div>
       </div>
 
       {/* Description */}

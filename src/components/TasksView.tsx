@@ -18,9 +18,14 @@ export function TasksView() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
 
   // Check if Supabase is configured
   const isConfigured = isSupabaseConfigured();
+  
+  // Filter tasks: exclude archived unless showArchived is true
+  const activeTasks = tasks.filter(t => t.status !== 'archived');
+  const archivedTasks = tasks.filter(t => t.status === 'archived');
 
   // Fetch tasks
   useEffect(() => {
@@ -119,6 +124,72 @@ export function TasksView() {
     } catch (err) {
       fetchTasks();
       console.error("Failed to delete task:", err);
+    }
+  };
+
+  const handleArchiveTask = async (taskId: string) => {
+    if (!supabase) return;
+    
+    // Optimistic update
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status: 'archived' as const } : t))
+    );
+
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ status: 'archived' })
+        .eq("id", taskId);
+
+      if (error) throw error;
+    } catch (err) {
+      fetchTasks();
+      console.error("Failed to archive task:", err);
+    }
+  };
+
+  const handleArchiveAllComplete = async () => {
+    if (!supabase) return;
+    
+    const completeTasks = tasks.filter(t => t.status === 'complete');
+    if (completeTasks.length === 0) return;
+
+    // Optimistic update
+    setTasks((prev) =>
+      prev.map((t) => (t.status === 'complete' ? { ...t, status: 'archived' as const } : t))
+    );
+
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ status: 'archived' })
+        .eq("status", "complete");
+
+      if (error) throw error;
+    } catch (err) {
+      fetchTasks();
+      console.error("Failed to archive all complete tasks:", err);
+    }
+  };
+
+  const handleRestoreTask = async (taskId: string) => {
+    if (!supabase) return;
+    
+    // Optimistic update
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status: 'complete' as const } : t))
+    );
+
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ status: 'complete' })
+        .eq("id", taskId);
+
+      if (error) throw error;
+    } catch (err) {
+      fetchTasks();
+      console.error("Failed to restore task:", err);
     }
   };
 
@@ -236,10 +307,62 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key`}
 
       {/* Task board */}
       <TaskBoard
-        tasks={tasks}
+        tasks={activeTasks}
         onMoveTask={handleMoveTask}
         onTaskClick={handleTaskClick}
+        onArchiveTask={handleArchiveTask}
+        onArchiveAllComplete={handleArchiveAllComplete}
       />
+      
+      {/* Archived section toggle */}
+      {archivedTasks.length > 0 && (
+        <div className="px-4 md:px-6 pb-4">
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+          >
+            <span>📦</span>
+            {showArchived ? NL.hideArchived : NL.showArchived}
+            <span className="px-1.5 py-0.5 bg-[var(--bg-tertiary)] rounded text-xs">
+              {archivedTasks.length}
+            </span>
+            <svg
+              className={`w-4 h-4 transition-transform ${showArchived ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          {showArchived && (
+            <div className="mt-3 space-y-2 p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border)]">
+              <h3 className="text-sm font-medium text-[var(--text-muted)] mb-3">
+                {NL.archived} ({archivedTasks.length})
+              </h3>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {archivedTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className="flex items-center justify-between p-3 bg-[var(--bg-primary)] rounded-lg border border-[var(--border)]"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-[var(--text-muted)] truncate">{task.title}</p>
+                    </div>
+                    <button
+                      onClick={() => handleRestoreTask(task.id)}
+                      className="ml-2 px-2 py-1 text-xs text-[var(--accent)] hover:bg-[var(--bg-tertiary)] rounded transition-colors"
+                    >
+                      {NL.restore}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Floating action button - mobile only */}
       {!showAddForm && (

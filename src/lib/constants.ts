@@ -10,6 +10,7 @@ export const NL = {
   todo: 'Te doen',
   inProgress: 'Bezig',
   complete: 'Voltooid',
+  archived: 'Gearchiveerd',
   
   // Acties
   addTask: 'Taak toevoegen',
@@ -53,6 +54,15 @@ export const NL = {
   // Misc
   swipeHint: '← Swipe om te wisselen →',
   all: 'Alles',
+  
+  // Archivering
+  archive: 'Archiveren',
+  archiveAll: 'Archiveer voltooide',
+  showMore: 'Toon meer',
+  showLess: 'Toon minder',
+  restore: 'Herstellen',
+  showArchived: 'Toon archief',
+  hideArchived: 'Verberg archief',
 } as const;
 
 export const ASSIGNEES: { id: Assignee; label: string; emoji: string }[] = [

@@ -21,7 +21,7 @@ export interface DocumentMeta {
 export type DocumentCategory = "concepts" | "journal" | "projects";
 
 // Task types
-export type TaskStatus = 'todo' | 'in-progress' | 'complete';
+export type TaskStatus = 'todo' | 'in-progress' | 'complete' | 'archived';
 
 export type Priority = 'low' | 'medium' | 'high';
 
