@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
 type ArieState = 'sleeping' | 'idle' | 'thinking' | 'talking' | 'happy';
@@ -47,7 +47,7 @@ export const ArieFox = ({
     happy: { scaleY: 0.6, borderRadius: '50% 50% 50% 50%' },
   };
 
-  const earVariants = {
+  const earVariants: Variants = {
     idle: { rotate: 0 },
     listening: { 
       rotate: [0, 5, -5, 0],
@@ -55,36 +55,36 @@ export const ArieFox = ({
     },
     thinking: {
       rotate: [-5, 5],
-      transition: { duration: 0.8, repeat: Infinity, repeatType: 'reverse' as const }
+      transition: { duration: 0.8, repeat: Infinity, repeatType: "reverse" as const }
     },
   };
 
-  const tailVariants = {
+  const tailVariants: Variants = {
     idle: {
       rotate: [0, 5, -5, 0],
-      transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+      transition: { duration: 2, repeat: Infinity, ease: "easeInOut" as const }
     },
     happy: {
       rotate: [-15, 15],
-      transition: { duration: 0.3, repeat: Infinity, repeatType: 'reverse' as const }
+      transition: { duration: 0.3, repeat: Infinity, repeatType: "reverse" as const }
     },
     sleeping: {
       rotate: 0,
     },
   };
 
-  const bodyVariants = {
+  const bodyVariants: Variants = {
     idle: {
       y: [0, -2, 0],
-      transition: { duration: 3, repeat: Infinity, ease: 'easeInOut' }
+      transition: { duration: 3, repeat: Infinity, ease: "easeInOut" as const }
     },
     sleeping: {
       y: [0, 2, 0],
-      transition: { duration: 4, repeat: Infinity, ease: 'easeInOut' }
+      transition: { duration: 4, repeat: Infinity, ease: "easeInOut" as const }
     },
     thinking: {
       y: [0, -3, 0],
-      transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
+      transition: { duration: 1.5, repeat: Infinity, ease: "easeInOut" as const }
     },
     talking: {
       y: [0, -1, 0],
@@ -92,7 +92,7 @@ export const ArieFox = ({
     },
     happy: {
       y: [0, -5, 0],
-      transition: { duration: 0.5, repeat: Infinity, ease: 'easeOut' }
+      transition: { duration: 0.5, repeat: Infinity, ease: "easeOut" as const }
     },
   };
 
