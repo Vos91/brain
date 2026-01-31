@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import type { Task, TaskStatus } from "@/types";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { TaskBoard } from "./TaskBoard";
@@ -9,6 +9,8 @@ import { AddTaskForm } from "./AddTaskForm";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { FloatingAddButton } from "./FloatingAddButton";
 import { ArieFox } from "./arie/ArieFox";
+import { SearchBar } from "./SearchBar";
+import { TaskFiltersBar, type TaskFilters } from "./TaskFilters";
 import { NL } from "@/lib/constants";
 
 export function TasksView() {
@@ -19,10 +21,50 @@ export function TasksView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<TaskFilters>({
+    priority: null,
+    category: null,
+    assignee: null,
+    hasDueDate: null,
+  });
 
   const isConfigured = isSupabaseConfigured();
-  const activeTasks = tasks.filter(t => t.status !== 'archived');
-  const archivedTasks = tasks.filter(t => t.status === 'archived');
+  
+  // Filter and search tasks
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch =
+          task.title.toLowerCase().includes(query) ||
+          task.description?.toLowerCase().includes(query) ||
+          task.notes?.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+
+      // Priority filter
+      if (filters.priority && task.priority !== filters.priority) return false;
+
+      // Category filter
+      if (filters.category && task.category !== filters.category) return false;
+
+      // Assignee filter
+      if (filters.assignee && task.assignee !== filters.assignee) return false;
+
+      // Due date filter
+      if (filters.hasDueDate === true && !task.due_date) return false;
+      if (filters.hasDueDate === false && task.due_date) return false;
+
+      return true;
+    });
+  }, [tasks, searchQuery, filters]);
+
+  const activeTasks = filteredTasks.filter(t => t.status !== 'archived');
+  const archivedTasks = filteredTasks.filter(t => t.status === 'archived');
+  
+  const hasActiveFilters = searchQuery || Object.values(filters).some(Boolean);
 
   const fetchTasks = useCallback(async () => {
     if (!supabase) return;
@@ -185,11 +227,28 @@ export function TasksView() {
     <div className="flex-1 flex flex-col min-h-0">
       <KeyboardShortcuts onNewTask={handleNewTaskShortcut} />
 
-      <div className="p-4 pb-0">
+      <div className="p-4 pb-0 space-y-3">
         {showAddForm ? (
           <AddTaskForm onAdd={handleAddTask} onCancel={() => setShowAddForm(false)} />
         ) : (
-          <AddTaskButton onClick={() => setShowAddForm(true)} />
+          <>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1">
+                <SearchBar 
+                  value={searchQuery} 
+                  onChange={setSearchQuery} 
+                  placeholder="Zoek taken..." 
+                />
+              </div>
+              <AddTaskButton onClick={() => setShowAddForm(true)} />
+            </div>
+            <TaskFiltersBar filters={filters} onFiltersChange={setFilters} />
+            {hasActiveFilters && (
+              <div className="text-sm text-[var(--text-muted)]">
+                {activeTasks.length} {activeTasks.length === 1 ? "taak" : "taken"} gevonden
+              </div>
+            )}
+          </>
         )}
       </div>
 

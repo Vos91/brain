@@ -11,6 +11,7 @@ import {
   CATEGORY_COLORS,
   ASSIGNEE_COLORS,
 } from "@/lib/constants";
+import { QuickDatePicker } from "./QuickDatePicker";
 
 interface AddTaskFormProps {
   onAdd: (task: Omit<Task, "id" | "created_at" | "updated_at" | "completed_at">) => void;
@@ -149,17 +150,12 @@ export function AddTaskForm({ onAdd, onCancel }: AddTaskFormProps) {
           </div>
         </div>
 
-        {/* Due Date */}
+        {/* Due Date with Quick Picker */}
         <div>
           <label className="block text-xs font-medium text-[var(--text-muted)] mb-2">
             {NL.dueDate}
           </label>
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className="px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-lg text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] text-sm"
-          />
+          <QuickDatePicker value={dueDate} onChange={setDueDate} />
         </div>
 
         {/* Actions */}
