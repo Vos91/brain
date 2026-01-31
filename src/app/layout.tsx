@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Toaster } from "@/components/Toaster";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({ 
@@ -32,7 +33,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="nl" className={`${jakarta.variable} ${jetbrains.variable}`}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

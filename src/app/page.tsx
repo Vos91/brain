@@ -6,6 +6,7 @@ import { DocumentView } from "@/components/DocumentView";
 import { WelcomeView } from "@/components/WelcomeView";
 import { TasksView } from "@/components/TasksView";
 import { LoginForm } from "@/components/LoginForm";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/lib/supabase";
 import type { DocumentMeta, Document, AppView } from "@/types";
 import type { User } from "@supabase/supabase-js";
@@ -293,15 +294,17 @@ export default function Home() {
 
         {/* Content Area */}
         <div className="flex-1 overflow-auto bg-[#0c1117]">
-          {activeView === "documents" ? (
-            selectedDoc ? (
-              <DocumentView document={selectedDoc} />
+          <ErrorBoundary>
+            {activeView === "documents" ? (
+              selectedDoc ? (
+                <DocumentView document={selectedDoc} />
+              ) : (
+                <WelcomeView documentCount={documents.length} />
+              )
             ) : (
-              <WelcomeView documentCount={documents.length} />
-            )
-          ) : (
-            <TasksView />
-          )}
+              <TasksView />
+            )}
+          </ErrorBoundary>
         </div>
       </main>
     </div>

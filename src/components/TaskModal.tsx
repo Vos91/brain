@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Task, TaskStatus, Priority, TaskCategory, Assignee } from "@/types";
+import { toast } from "./Toaster";
+import { validateTask } from "@/lib/schemas";
 import {
   NL,
   STATUSES,
@@ -36,10 +38,38 @@ export function TaskModal({
     }
   }, [task]);
 
+  // Escape key handler
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape" && isOpen) {
+      onClose();
+    }
+    // Ctrl/Cmd + S to save
+    if ((e.ctrlKey || e.metaKey) && e.key === "s" && isOpen && editedTask) {
+      e.preventDefault();
+      const validation = validateTask(editedTask);
+      if (validation.success) {
+        onSave(editedTask);
+        onClose();
+      } else {
+        toast.error(validation.error);
+      }
+    }
+  }, [isOpen, onClose, editedTask, onSave]);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
   if (!isOpen || !editedTask) return null;
 
   const handleSave = () => {
     if (editedTask) {
+      const validation = validateTask(editedTask);
+      if (!validation.success) {
+        toast.error(validation.error);
+        return;
+      }
       onSave(editedTask);
       onClose();
     }

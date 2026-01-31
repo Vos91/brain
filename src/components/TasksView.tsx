@@ -11,6 +11,9 @@ import { FloatingAddButton } from "./FloatingAddButton";
 import { ArieFox } from "./arie/ArieFox";
 import { SearchBar } from "./SearchBar";
 import { TaskFiltersBar, type TaskFilters } from "./TaskFilters";
+import { ErrorBoundary } from "./ErrorBoundary";
+import { toast } from "./Toaster";
+import { validateNewTask } from "@/lib/schemas";
 import { NL } from "@/lib/constants";
 
 export function TasksView() {
@@ -97,16 +100,23 @@ export function TasksView() {
     setTasks(updater);
   }
 
-  // Error handler helper
+  // Error handler helper with toast notifications
   async function withErrorHandling<T extends { error: unknown }>(
     operation: PromiseLike<T>,
-    errorMsg: string
+    errorMsg: string,
+    successMsg?: string
   ) {
     const result = await operation;
     if (result.error) {
-      fetchTasks();
+      fetchTasks(); // Rollback to server state
+      toast.error(errorMsg);
       console.error(errorMsg, result.error);
+      return false;
     }
+    if (successMsg) {
+      toast.success(successMsg);
+    }
+    return true;
   }
 
   const handleMoveTask = async (taskId: string, newStatus: TaskStatus) => {
@@ -181,12 +191,23 @@ export function TasksView() {
   const handleAddTask = async (newTask: Omit<Task, "id" | "created_at" | "updated_at" | "completed_at">) => {
     if (!supabase) return;
     
+    // Validate input
+    const validation = validateNewTask(newTask);
+    if (!validation.success) {
+      toast.error(validation.error);
+      return;
+    }
+    
     try {
-      const { data, error } = await supabase.from("tasks").insert([newTask]).select().single();
+      const { data, error } = await supabase.from("tasks").insert([validation.data]).select().single();
       if (error) throw error;
-      if (data) setTasks(prev => [data, ...prev]);
+      if (data) {
+        setTasks(prev => [data, ...prev]);
+        toast.success("Taak toegevoegd");
+      }
       setShowAddForm(false);
     } catch (err) {
+      toast.error("Kon taak niet toevoegen");
       console.error("Failed to add task:", err);
     }
   };
