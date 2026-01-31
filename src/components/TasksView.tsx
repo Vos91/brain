@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import type { Task, TaskStatus } from "@/types";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { useState, useCallback, useMemo } from "react";
+import type { Task } from "@/types";
+import { isSupabaseConfigured } from "@/lib/supabase";
+import { useTasks } from "@/hooks/useTasks";
 import { TaskBoard } from "./TaskBoard";
 import { TaskModal } from "./TaskModal";
 import { AddTaskForm } from "./AddTaskForm";
@@ -10,22 +11,18 @@ import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { FloatingAddButton } from "./FloatingAddButton";
 import { ArieFox } from "./arie/ArieFox";
 import { SearchBar } from "./SearchBar";
-import { TaskFiltersBar, type TaskFilters } from "./TaskFilters";
+import { TaskFiltersBar, type TaskFilters as UIFilters } from "./TaskFilters";
 import { ErrorBoundary } from "./ErrorBoundary";
-import { toast } from "./Toaster";
-import { validateNewTask } from "@/lib/schemas";
+import { NetworkStatus } from "./NetworkStatus";
 import { NL } from "@/lib/constants";
 
 export function TasksView() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState<TaskFilters>({
+  const [uiFilters, setUiFilters] = useState<UIFilters>({
     priority: null,
     category: null,
     assignee: null,
@@ -33,186 +30,84 @@ export function TasksView() {
   });
 
   const isConfigured = isSupabaseConfigured();
-  
-  // Filter and search tasks
-  const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesSearch =
-          task.title.toLowerCase().includes(query) ||
-          task.description?.toLowerCase().includes(query) ||
-          task.notes?.toLowerCase().includes(query);
-        if (!matchesSearch) return false;
-      }
 
-      // Priority filter
-      if (filters.priority && task.priority !== filters.priority) return false;
+  // Use the tasks hook with server-side filtering
+  const {
+    tasks,
+    loading,
+    error,
+    total,
+    hasMore,
+    setSearch,
+    setFilters,
+    loadMore,
+    refresh,
+    addTask,
+    editTask,
+    moveTask,
+    removeTask,
+  } = useTasks({ pageSize: 50 });
 
-      // Category filter
-      if (filters.category && task.category !== filters.category) return false;
+  // Update server filters when UI filters change
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    setSearch(value);
+  }, [setSearch]);
 
-      // Assignee filter
-      if (filters.assignee && task.assignee !== filters.assignee) return false;
-
-      // Due date filter
-      if (filters.hasDueDate === true && !task.due_date) return false;
-      if (filters.hasDueDate === false && task.due_date) return false;
-
-      return true;
+  const handleFiltersChange = useCallback((newFilters: UIFilters) => {
+    setUiFilters(newFilters);
+    setFilters({
+      priority: newFilters.priority,
+      category: newFilters.category,
+      assignee: newFilters.assignee,
+      hasDueDate: newFilters.hasDueDate,
     });
-  }, [tasks, searchQuery, filters]);
+  }, [setFilters]);
 
-  const activeTasks = filteredTasks.filter(t => t.status !== 'archived');
-  const archivedTasks = filteredTasks.filter(t => t.status === 'archived');
+  // Separate active and archived tasks
+  const activeTasks = useMemo(() => tasks.filter(t => t.status !== 'archived'), [tasks]);
+  const archivedTasks = useMemo(() => tasks.filter(t => t.status === 'archived'), [tasks]);
   
-  const hasActiveFilters = searchQuery || Object.values(filters).some(Boolean);
+  const hasActiveFilters = searchQuery || Object.values(uiFilters).some(Boolean);
 
-  const fetchTasks = useCallback(async () => {
-    if (!supabase) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setTasks(data || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load tasks");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isConfigured) {
-      fetchTasks();
-    } else {
-      setLoading(false);
-    }
-  }, [isConfigured, fetchTasks]);
-
-  // Optimistic update helper
-  function updateTasksOptimistically(updater: (tasks: Task[]) => Task[]) {
-    setTasks(updater);
-  }
-
-  // Error handler helper with toast notifications
-  async function withErrorHandling<T extends { error: unknown }>(
-    operation: PromiseLike<T>,
-    errorMsg: string,
-    successMsg?: string
-  ) {
-    const result = await operation;
-    if (result.error) {
-      fetchTasks(); // Rollback to server state
-      toast.error(errorMsg);
-      console.error(errorMsg, result.error);
-      return false;
-    }
-    if (successMsg) {
-      toast.success(successMsg);
-    }
-    return true;
-  }
-
-  const handleMoveTask = async (taskId: string, newStatus: TaskStatus) => {
-    if (!supabase) return;
-    updateTasksOptimistically(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
-    await withErrorHandling(
-      supabase.from("tasks").update({ status: newStatus }).eq("id", taskId),
-      "Failed to move task:"
-    );
-  };
-
-  const handleTaskClick = (task: Task) => {
+  // Handlers
+  const handleTaskClick = useCallback((task: Task) => {
     setSelectedTask(task);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleSaveTask = async (updatedTask: Task) => {
-    if (!supabase) return;
-    updateTasksOptimistically(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
-    await withErrorHandling(
-      supabase.from("tasks").update({
-        title: updatedTask.title,
-        description: updatedTask.description,
-        status: updatedTask.status,
-        priority: updatedTask.priority,
-        category: updatedTask.category,
-        assignee: updatedTask.assignee,
-        notes: updatedTask.notes,
-        due_date: updatedTask.due_date,
-      }).eq("id", updatedTask.id),
-      "Failed to save task:"
-    );
-  };
+  const handleSaveTask = useCallback(async (updatedTask: Task) => {
+    await editTask(updatedTask);
+  }, [editTask]);
 
-  const handleDeleteTask = async (taskId: string) => {
-    if (!supabase) return;
-    updateTasksOptimistically(prev => prev.filter(t => t.id !== taskId));
-    await withErrorHandling(
-      supabase.from("tasks").delete().eq("id", taskId),
-      "Failed to delete task:"
-    );
-  };
+  const handleDeleteTask = useCallback(async (taskId: string) => {
+    await removeTask(taskId);
+  }, [removeTask]);
 
-  const handleArchiveTask = async (taskId: string) => {
-    if (!supabase) return;
-    updateTasksOptimistically(prev => prev.map(t => t.id === taskId ? { ...t, status: 'archived' as const } : t));
-    await withErrorHandling(
-      supabase.from("tasks").update({ status: 'archived' }).eq("id", taskId),
-      "Failed to archive task:"
-    );
-  };
+  const handleArchiveTask = useCallback(async (taskId: string) => {
+    await moveTask(taskId, 'archived' as const);
+  }, [moveTask]);
 
-  const handleArchiveAllComplete = async () => {
-    if (!supabase) return;
-    if (!tasks.some(t => t.status === 'complete')) return;
-    updateTasksOptimistically(prev => prev.map(t => t.status === 'complete' ? { ...t, status: 'archived' as const } : t));
-    await withErrorHandling(
-      supabase.from("tasks").update({ status: 'archived' }).eq("status", "complete"),
-      "Failed to archive all:"
-    );
-  };
-
-  const handleRestoreTask = async (taskId: string) => {
-    if (!supabase) return;
-    updateTasksOptimistically(prev => prev.map(t => t.id === taskId ? { ...t, status: 'complete' as const } : t));
-    await withErrorHandling(
-      supabase.from("tasks").update({ status: 'complete' }).eq("id", taskId),
-      "Failed to restore task:"
-    );
-  };
-
-  const handleAddTask = async (newTask: Omit<Task, "id" | "created_at" | "updated_at" | "completed_at">) => {
-    if (!supabase) return;
-    
-    // Validate input
-    const validation = validateNewTask(newTask);
-    if (!validation.success) {
-      toast.error(validation.error);
-      return;
+  const handleArchiveAllComplete = useCallback(async () => {
+    const completeTasks = tasks.filter(t => t.status === 'complete');
+    for (const task of completeTasks) {
+      await moveTask(task.id, 'archived' as const);
     }
-    
-    try {
-      const { data, error } = await supabase.from("tasks").insert([validation.data]).select().single();
-      if (error) throw error;
-      if (data) {
-        setTasks(prev => [data, ...prev]);
-        toast.success("Taak toegevoegd");
-      }
+  }, [tasks, moveTask]);
+
+  const handleRestoreTask = useCallback(async (taskId: string) => {
+    await moveTask(taskId, 'complete');
+  }, [moveTask]);
+
+  const handleAddTask = useCallback(async (newTask: Omit<Task, "id" | "created_at" | "updated_at" | "completed_at">) => {
+    const success = await addTask(newTask);
+    if (success) {
       setShowAddForm(false);
-    } catch (err) {
-      toast.error("Kon taak niet toevoegen");
-      console.error("Failed to add task:", err);
     }
-  };
+  }, [addTask]);
 
   const handleNewTaskShortcut = useCallback(() => setShowAddForm(true), []);
+  
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
     setSelectedTask(null);
@@ -223,7 +118,7 @@ export function TasksView() {
     return <NotConfiguredView />;
   }
 
-  if (loading) {
+  if (loading && tasks.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-4">
         <ArieFox state="thinking" size={80} />
@@ -232,13 +127,19 @@ export function TasksView() {
     );
   }
 
-  if (error) {
+  if (error && tasks.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-4 gap-4">
         <ArieFox state="sleeping" size={80} />
         <div className="text-center">
           <p className="text-rose-400 mb-2">⚠️ {error}</p>
-          <p className="text-[var(--text-muted)] text-sm">Check je Supabase configuratie in .env.local</p>
+          <p className="text-[var(--text-muted)] text-sm mb-4">Check je internetverbinding</p>
+          <button
+            onClick={refresh}
+            className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
+          >
+            Opnieuw proberen
+          </button>
         </div>
       </div>
     );
@@ -247,6 +148,7 @@ export function TasksView() {
   return (
     <div className="flex-1 flex flex-col min-h-0">
       <KeyboardShortcuts onNewTask={handleNewTaskShortcut} />
+      <NetworkStatus />
 
       <div className="p-4 pb-0 space-y-3">
         {showAddForm ? (
@@ -257,29 +159,45 @@ export function TasksView() {
               <div className="flex-1">
                 <SearchBar 
                   value={searchQuery} 
-                  onChange={setSearchQuery} 
+                  onChange={handleSearchChange} 
                   placeholder="Zoek taken..." 
                 />
               </div>
               <AddTaskButton onClick={() => setShowAddForm(true)} />
             </div>
-            <TaskFiltersBar filters={filters} onFiltersChange={setFilters} />
-            {hasActiveFilters && (
-              <div className="text-sm text-[var(--text-muted)]">
-                {activeTasks.length} {activeTasks.length === 1 ? "taak" : "taken"} gevonden
+            <TaskFiltersBar filters={uiFilters} onFiltersChange={handleFiltersChange} />
+            {(hasActiveFilters || total > 0) && (
+              <div className="flex items-center justify-between text-sm text-[var(--text-muted)]">
+                <span>
+                  {hasActiveFilters 
+                    ? `${activeTasks.length} ${activeTasks.length === 1 ? "taak" : "taken"} gevonden`
+                    : `${total} taken totaal`
+                  }
+                </span>
+                {hasMore && (
+                  <button
+                    onClick={loadMore}
+                    disabled={loading}
+                    className="text-[var(--accent)] hover:underline disabled:opacity-50"
+                  >
+                    {loading ? "Laden..." : "Meer laden"}
+                  </button>
+                )}
               </div>
             )}
           </>
         )}
       </div>
 
-      <TaskBoard
-        tasks={activeTasks}
-        onMoveTask={handleMoveTask}
-        onTaskClick={handleTaskClick}
-        onArchiveTask={handleArchiveTask}
-        onArchiveAllComplete={handleArchiveAllComplete}
-      />
+      <ErrorBoundary>
+        <TaskBoard
+          tasks={activeTasks}
+          onMoveTask={moveTask}
+          onTaskClick={handleTaskClick}
+          onArchiveTask={handleArchiveTask}
+          onArchiveAllComplete={handleArchiveAllComplete}
+        />
+      </ErrorBoundary>
       
       {archivedTasks.length > 0 && (
         <ArchivedSection
