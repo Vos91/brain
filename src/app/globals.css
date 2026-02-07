@@ -383,3 +383,59 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border-radius: 0 2px 2px 0;
   box-shadow: 0 0 8px var(--accent-glow);
 }
+
+/* Light mode */
+.light-mode {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-elevated: #e2e8f0;
+  --border: #cbd5e1;
+  --border-subtle: #e2e8f0;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  
+  --accent: #f59e0b;
+  --accent-hover: #d97706;
+  --accent-muted: rgba(245, 158, 11, 0.1);
+  --accent-glow: rgba(245, 158, 11, 0.3);
+}
+
+.light-mode body::before {
+  opacity: 0.02;
+}
+
+.light-mode input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: none;
+  opacity: 0.7;
+}
+
+/* Due date warnings */
+.due-warning {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: var(--warning) !important;
+}
+
+.due-overdue {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--error) !important;
+}
+
+.due-badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.due-badge-warning {
+  background: var(--warning);
+  color: var(--bg-primary);
+}
+
+.due-badge-overdue {
+  background: var(--error);
+  color: white;
+}

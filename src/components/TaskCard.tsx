@@ -24,6 +24,7 @@ export function TaskCard({ task, onClick, onArchive }: TaskCardProps) {
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -42,10 +43,19 @@ export function TaskCard({ task, onClick, onArchive }: TaskCardProps) {
     return date.toLocaleDateString("nl-NL", { month: "short", day: "numeric" });
   };
 
-  const isOverdue =
-    task.due_date &&
-    new Date(task.due_date) < new Date() &&
-    task.status !== "complete";
+  const getDueStatus = () => {
+    if (!task.due_date || task.status === "complete") return null;
+    const now = new Date();
+    const due = new Date(task.due_date);
+    const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return "overdue";
+    if (diffDays <= 2) return "soon";
+    return null;
+  };
+
+  const dueStatus = getDueStatus();
+  const isOverdue = dueStatus === "overdue";
 
   const categoryInfo = CATEGORIES.find((c) => c.id === task.category);
   const assigneeInfo = task.assignee
@@ -58,13 +68,11 @@ export function TaskCard({ task, onClick, onArchive }: TaskCardProps) {
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
       onClick={onClick}
       className={`
         group
         bg-[#131920] border border-[#1e2730] rounded-xl
         p-4
-        cursor-grab active:cursor-grabbing
         transition-all duration-200
         hover:border-[#2a3441] hover:bg-[#1a2129]
         hover:shadow-lg hover:shadow-black/20
@@ -72,8 +80,24 @@ export function TaskCard({ task, onClick, onArchive }: TaskCardProps) {
         ${isDragging ? "opacity-50 shadow-2xl scale-[1.02] rotate-1" : ""}
       `}
     >
-      {/* Header row: title + priority + archive */}
+      {/* Header row: drag handle + title + priority + archive */}
       <div className="flex items-start justify-between gap-2 mb-2">
+        {/* Drag handle - only this triggers drag */}
+        <button
+          ref={setActivatorNodeRef}
+          {...listeners}
+          className="flex-shrink-0 p-1 -ml-1 cursor-grab active:cursor-grabbing text-[var(--text-muted)] hover:text-[var(--text-secondary)] touch-none"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <circle cx="9" cy="5" r="1.5" />
+            <circle cx="15" cy="5" r="1.5" />
+            <circle cx="9" cy="12" r="1.5" />
+            <circle cx="15" cy="12" r="1.5" />
+            <circle cx="9" cy="19" r="1.5" />
+            <circle cx="15" cy="19" r="1.5" />
+          </svg>
+        </button>
         <h4 className="text-sm font-medium text-[--text-primary] leading-snug flex-1 min-w-0 group-hover:text-white transition-colors">
           {task.title}
         </h4>
@@ -124,15 +148,19 @@ export function TaskCard({ task, onClick, onArchive }: TaskCardProps) {
         {task.due_date && (
           <span
             className={`
-              text-xs px-2.5 py-1 rounded-lg
+              text-xs px-2.5 py-1 rounded-lg flex items-center gap-1
               ${
-                isOverdue
+                dueStatus === "overdue"
                   ? "text-rose-400 bg-rose-500/10 border border-rose-500/20 font-medium"
+                  : dueStatus === "soon"
+                  ? "text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium"
                   : "text-[--text-muted] bg-[#1a2129]"
               }
             `}
           >
             📅 {formatDate(task.due_date)}
+            {dueStatus === "overdue" && <span className="due-badge due-badge-overdue ml-1">Te laat</span>}
+            {dueStatus === "soon" && <span className="due-badge due-badge-warning ml-1">Bijna</span>}
           </span>
         )}
       </div>

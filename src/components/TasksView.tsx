@@ -15,6 +15,9 @@ import { TaskFiltersBar, type TaskFilters as UIFilters } from "./TaskFilters";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { NetworkStatus } from "./NetworkStatus";
 import { NL } from "@/lib/constants";
+import { ThemeToggle } from "./ThemeToggle";
+import { ExportButton } from "./ExportButton";
+import { TaskStats } from "./TaskStats";
 
 export function TasksView() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -163,7 +166,11 @@ export function TasksView() {
                   placeholder="Zoek taken..." 
                 />
               </div>
-              <AddTaskButton onClick={() => setShowAddForm(true)} />
+              <div className="flex items-center gap-2">
+                <ExportButton tasks={tasks} />
+                <ThemeToggle />
+                <AddTaskButton onClick={() => setShowAddForm(true)} />
+              </div>
             </div>
             <TaskFiltersBar filters={uiFilters} onFiltersChange={handleFiltersChange} />
             {(hasActiveFilters || total > 0) && (
@@ -188,6 +195,8 @@ export function TasksView() {
           </>
         )}
       </div>
+
+      <TaskStats tasks={tasks} />
 
       <ErrorBoundary>
         <TaskBoard
