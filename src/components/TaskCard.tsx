@@ -11,6 +11,7 @@ import {
   ASSIGNEE_COLORS,
   PRIORITIES,
   NL,
+  getTagColorClass,
 } from "@/lib/constants";
 
 interface TaskCardProps {
@@ -132,6 +133,45 @@ export function TaskCard({ task, onClick, onArchive }: TaskCardProps) {
         <p className="text-xs text-[--text-muted] mb-3 line-clamp-2 leading-relaxed">
           {task.description}
         </p>
+      )}
+
+      {/* Tags */}
+      {task.tags && task.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          {task.tags.slice(0, 4).map((tag) => (
+            <span
+              key={tag.id}
+              className={`
+                text-[10px] px-1.5 py-0.5 rounded border font-medium
+                ${getTagColorClass(tag.color)}
+              `}
+            >
+              {tag.name}
+            </span>
+          ))}
+          {task.tags.length > 4 && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] text-[var(--text-muted)]">
+              +{task.tags.length - 4}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Subtask progress */}
+      {task.subtasks && task.subtasks.length > 0 && (
+        <div className="flex items-center gap-2 mb-3">
+          <div className="flex-1 h-1 bg-[#1a2129] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[var(--accent)] transition-all duration-300"
+              style={{
+                width: `${(task.subtasks.filter(s => s.completed).length / task.subtasks.length) * 100}%`
+              }}
+            />
+          </div>
+          <span className="text-[10px] text-[var(--text-muted)] font-medium">
+            {task.subtasks.filter(s => s.completed).length}/{task.subtasks.length}
+          </span>
+        </div>
       )}
 
       {/* Footer row: category + due date */}

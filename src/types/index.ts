@@ -29,6 +29,26 @@ export type TaskCategory = 'dev' | 'research' | 'admin' | 'cron' | 'communicatio
 
 export type Assignee = 'Arie' | 'Jasper';
 
+// Tags/Labels
+export interface Tag {
+  id: string;
+  name: string;
+  color: TagColor;
+}
+
+export type TagColor = 
+  | 'red' | 'orange' | 'amber' | 'yellow' | 'lime' 
+  | 'green' | 'emerald' | 'teal' | 'cyan' | 'sky' 
+  | 'blue' | 'indigo' | 'violet' | 'purple' | 'fuchsia' 
+  | 'pink' | 'rose' | 'slate';
+
+// Subtasks
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -42,6 +62,8 @@ export interface Task {
   created_at: string;
   updated_at: string;
   completed_at: string | null;
+  tags?: Tag[];
+  subtasks?: Subtask[];
 }
 
 // App types

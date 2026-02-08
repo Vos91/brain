@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { Task, TaskStatus, Priority, TaskCategory, Assignee } from "@/types";
+import type { Task, TaskStatus, Priority, TaskCategory, Assignee, Tag, Subtask } from "@/types";
 import { toast } from "./Toaster";
 import { validateTask } from "@/lib/schemas";
 import {
@@ -14,6 +14,8 @@ import {
   CATEGORY_COLORS,
   ASSIGNEE_COLORS,
 } from "@/lib/constants";
+import { TagInput } from "./TagInput";
+import { SubtaskList } from "./SubtaskList";
 
 interface TaskModalProps {
   task: Task | null;
@@ -315,6 +317,28 @@ export function TaskModal({
               rows={3}
               placeholder="Notities..."
               className="w-full px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-lg text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] resize-none"
+            />
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+              🏷️ Tags
+            </label>
+            <TagInput
+              tags={editedTask.tags || []}
+              onChange={(tags) => setEditedTask({ ...editedTask, tags })}
+            />
+          </div>
+
+          {/* Subtasks */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+              ☑️ Subtaken
+            </label>
+            <SubtaskList
+              subtasks={editedTask.subtasks || []}
+              onChange={(subtasks) => setEditedTask({ ...editedTask, subtasks })}
             />
           </div>
 

@@ -109,3 +109,31 @@ export const ASSIGNEE_COLORS: Record<Assignee, string> = {
   'Arie': 'bg-orange-500/15 text-orange-400 border-orange-500/25',
   'Jasper': 'bg-indigo-500/15 text-indigo-400 border-indigo-500/25',
 };
+
+// Tag colors with full palette
+import type { TagColor } from '@/types';
+
+export const TAG_COLORS: { id: TagColor; label: string; class: string }[] = [
+  { id: 'red', label: 'Rood', class: 'bg-red-500/20 text-red-400 border-red-500/30' },
+  { id: 'orange', label: 'Oranje', class: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+  { id: 'amber', label: 'Amber', class: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
+  { id: 'yellow', label: 'Geel', class: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+  { id: 'lime', label: 'Limoen', class: 'bg-lime-500/20 text-lime-400 border-lime-500/30' },
+  { id: 'green', label: 'Groen', class: 'bg-green-500/20 text-green-400 border-green-500/30' },
+  { id: 'emerald', label: 'Smaragd', class: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+  { id: 'teal', label: 'Teal', class: 'bg-teal-500/20 text-teal-400 border-teal-500/30' },
+  { id: 'cyan', label: 'Cyaan', class: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },
+  { id: 'sky', label: 'Hemelsblauw', class: 'bg-sky-500/20 text-sky-400 border-sky-500/30' },
+  { id: 'blue', label: 'Blauw', class: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+  { id: 'indigo', label: 'Indigo', class: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' },
+  { id: 'violet', label: 'Violet', class: 'bg-violet-500/20 text-violet-400 border-violet-500/30' },
+  { id: 'purple', label: 'Paars', class: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+  { id: 'fuchsia', label: 'Fuchsia', class: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30' },
+  { id: 'pink', label: 'Roze', class: 'bg-pink-500/20 text-pink-400 border-pink-500/30' },
+  { id: 'rose', label: 'Rozé', class: 'bg-rose-500/20 text-rose-400 border-rose-500/30' },
+  { id: 'slate', label: 'Grijs', class: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
+];
+
+export const getTagColorClass = (color: TagColor): string => {
+  return TAG_COLORS.find(c => c.id === color)?.class || TAG_COLORS[0].class;
+};
