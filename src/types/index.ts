@@ -66,5 +66,22 @@ export interface Task {
   subtasks?: Subtask[];
 }
 
+// Knowledge Base types
+export type SourceType = 'article' | 'video' | 'tweet' | 'pdf' | 'note';
+
+export interface KBSource {
+  id: string;
+  url: string;
+  title: string;
+  source_type: SourceType;
+  summary: string | null;
+  raw_content: string;
+  content_hash: string;
+  tags: string[];
+  favicon_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // App types
-export type AppView = 'documents' | 'tasks';
+export type AppView = 'documents' | 'tasks' | 'library';

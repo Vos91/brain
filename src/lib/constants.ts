@@ -54,6 +54,23 @@ export const NL = {
   // Misc
   swipeHint: '← Swipe om te wisselen →',
   all: 'Alles',
+
+  // Knowledge Base / Library
+  library: 'Bibliotheek',
+  saveUrl: 'URL opslaan',
+  searchLibrary: 'Zoek in bibliotheek...',
+  emptyLibrary: 'Je bibliotheek is nog leeg',
+  emptyLibraryHint: 'Sla je eerste artikel op!',
+  article: 'Artikel',
+  video: 'Video',
+  tweet: 'Tweet',
+  pdf: 'PDF',
+  note: 'Notitie',
+  savedAgo: 'geleden opgeslagen',
+  deleteSource: 'Bron verwijderen',
+  confirmDelete: 'Weet je het zeker?',
+  contentPreview: 'Inhoud',
+  sourceUrl: 'Bron URL',
   
   // Archivering
   archive: 'Archiveren',

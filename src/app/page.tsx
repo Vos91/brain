@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { DocumentView } from "@/components/DocumentView";
 import { WelcomeView } from "@/components/WelcomeView";
 import { TasksView } from "@/components/TasksView";
+import { LibraryView } from "@/components/LibraryView";
 import { LoginForm } from "@/components/LoginForm";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/lib/supabase";
@@ -174,6 +175,20 @@ export default function Home() {
                 <span>📄</span>
                 <span>Docs</span>
               </button>
+              <button
+                onClick={() => handleViewChange("library")}
+                className={`
+                  flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all duration-200
+                  ${
+                    activeView === "library"
+                      ? "bg-gradient-to-r from-amber-500 to-orange-500 text-[#0c1117] shadow-lg shadow-amber-500/25"
+                      : "text-[--text-muted] hover:text-[--text-primary] hover:bg-[#1a2129]"
+                  }
+                `}
+              >
+                <span>📚</span>
+                <span>Library</span>
+              </button>
             </div>
           </div>
 
@@ -191,7 +206,7 @@ export default function Home() {
           ) : (
             <div className="flex-1 p-4">
               <div className="text-sm text-[--text-muted] text-center py-8">
-                Taken in hoofdpaneel →
+                {activeView === "tasks" ? "Taken in hoofdpaneel →" : "Bibliotheek in hoofdpaneel →"}
               </div>
             </div>
           )}
@@ -277,10 +292,19 @@ export default function Home() {
             </div>
           )}
 
+          {activeView === "library" && (
+            <div className="hidden sm:flex items-center ml-3">
+              <span className="text-[--text-muted] mx-2">/</span>
+              <span className="text-sm text-[--text-primary] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">
+                📚 Bibliotheek
+              </span>
+            </div>
+          )}
+
           {/* Mobile view indicator */}
           <div className="ml-auto flex items-center gap-2 sm:hidden">
             <span className="text-lg">
-              {activeView === "documents" ? "📄" : "✅"}
+              {activeView === "documents" ? "📄" : activeView === "tasks" ? "✅" : "📚"}
             </span>
           </div>
 
@@ -301,8 +325,10 @@ export default function Home() {
               ) : (
                 <WelcomeView documentCount={documents.length} />
               )
-            ) : (
+            ) : activeView === "tasks" ? (
               <TasksView />
+            ) : (
+              <LibraryView />
             )}
           </ErrorBoundary>
         </div>
