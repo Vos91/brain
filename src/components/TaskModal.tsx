@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import DOMPurify from "dompurify";
 import type { Task, TaskStatus, Priority, TaskCategory, Assignee, Tag, Subtask } from "@/types";
 import { toast } from "./Toaster";
 import { validateTask } from "@/lib/schemas";
@@ -16,6 +17,36 @@ import {
 } from "@/lib/constants";
 import { TagInput } from "./TagInput";
 import { SubtaskList } from "./SubtaskList";
+
+function renderMarkdown(text: string): string {
+  if (!text) return "";
+  let html = text
+    // Escape HTML first
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  // Bold: **text**
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  // Italic: *text* (but not inside bold)
+  html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "<em>$1</em>");
+  // Inline code: `code`
+  html = html.replace(/`([^`]+)`/g, '<code style="background:var(--bg-tertiary);padding:1px 4px;border-radius:3px;font-size:0.85em">$1</code>');
+  // URLs: auto-link
+  html = html.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:var(--accent);text-decoration:underline">$1</a>'
+  );
+  // Bullet lists: lines starting with "- "
+  html = html.replace(/^- (.+)$/gm, '<li style="margin-left:1.2em;list-style:disc">$1</li>');
+  // Wrap consecutive <li> in <ul>
+  html = html.replace(/((?:<li[^>]*>.*?<\/li>\n?)+)/g, '<ul style="margin:0.25em 0">$1</ul>');
+  // Line breaks
+  html = html.replace(/\n/g, "<br>");
+  // Clean up <br> inside <ul>
+  html = html.replace(/<ul([^>]*)><br>/g, "<ul$1>");
+  html = html.replace(/<br><\/ul>/g, "</ul>");
+  return DOMPurify.sanitize(html);
+}
 
 interface TaskModalProps {
   task: Task | null;
@@ -33,6 +64,7 @@ export function TaskModal({
   onDelete,
 }: TaskModalProps) {
   const [editedTask, setEditedTask] = useState<Task | null>(null);
+  const [descriptionPreview, setDescriptionPreview] = useState(false);
 
   useEffect(() => {
     if (task) {
@@ -148,17 +180,33 @@ export function TaskModal({
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-              {NL.description}
-            </label>
-            <textarea
-              value={editedTask.description}
-              onChange={(e) =>
-                setEditedTask({ ...editedTask, description: e.target.value })
-              }
-              rows={3}
-              className="w-full px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-lg text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] resize-none"
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)]">
+                {NL.description}
+              </label>
+              <button
+                type="button"
+                onClick={() => setDescriptionPreview(!descriptionPreview)}
+                className="text-xs px-2 py-1 rounded-md bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors border border-[var(--border)]"
+              >
+                {descriptionPreview ? "📝 Bewerken" : "👁️ Voorbeeld"}
+              </button>
+            </div>
+            {descriptionPreview ? (
+              <div
+                className="w-full px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-lg text-[var(--text-primary)] text-sm leading-relaxed min-h-[5rem]"
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(editedTask.description || "") }}
+              />
+            ) : (
+              <textarea
+                value={editedTask.description}
+                onChange={(e) =>
+                  setEditedTask({ ...editedTask, description: e.target.value })
+                }
+                rows={3}
+                className="w-full px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-lg text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] resize-none"
+              />
+            )}
           </div>
 
           {/* Status */}

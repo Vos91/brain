@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "@/types";
@@ -18,9 +19,60 @@ interface TaskCardProps {
   task: Task;
   onClick: () => void;
   onArchive?: () => void;
+  onTitleUpdate?: (taskId: string, newTitle: string) => void;
+  onQuickComplete?: (taskId: string) => void;
 }
 
-export function TaskCard({ task, onClick, onArchive }: TaskCardProps) {
+export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickComplete }: TaskCardProps) {
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState(task.title);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isEditingTitle]);
+
+  const handleTitleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onTitleUpdate) {
+      setEditTitle(task.title);
+      setIsEditingTitle(true);
+    }
+  };
+
+  const handleTitleSave = () => {
+    const trimmed = editTitle.trim();
+    if (trimmed && trimmed !== task.title && onTitleUpdate) {
+      onTitleUpdate(task.id, trimmed);
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
+    if (e.key === "Enter") {
+      handleTitleSave();
+    } else if (e.key === "Escape") {
+      setEditTitle(task.title);
+      setIsEditingTitle(false);
+    }
+  };
+
+  const handleQuickComplete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onQuickComplete && task.status !== "complete") {
+      setIsCompleting(true);
+      setTimeout(() => {
+        onQuickComplete(task.id);
+        setIsCompleting(false);
+      }, 300);
+    }
+  };
+
   const {
     attributes,
     listeners,
@@ -99,9 +151,46 @@ export function TaskCard({ task, onClick, onArchive }: TaskCardProps) {
             <circle cx="15" cy="19" r="1.5" />
           </svg>
         </button>
-        <h4 className="text-sm font-medium text-[--text-primary] leading-snug flex-1 min-w-0 group-hover:text-white transition-colors">
-          {task.title}
-        </h4>
+        {/* Quick complete checkbox */}
+        {onQuickComplete && task.status !== "complete" && (
+          <button
+            onClick={handleQuickComplete}
+            className={`
+              flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center
+              transition-all duration-200
+              ${isCompleting
+                ? "border-emerald-400 bg-emerald-400 scale-110"
+                : "border-[var(--text-muted)] hover:border-emerald-400 hover:bg-emerald-400/10"
+              }
+            `}
+            title="Markeer als voltooid"
+          >
+            {isCompleting && (
+              <svg className="w-3 h-3 text-white animate-scale-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </button>
+        )}
+        {isEditingTitle ? (
+          <input
+            ref={titleInputRef}
+            type="text"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            onBlur={handleTitleSave}
+            onKeyDown={handleTitleKeyDown}
+            onClick={(e) => e.stopPropagation()}
+            className="text-sm font-medium text-[--text-primary] leading-snug flex-1 min-w-0 bg-transparent border-b border-[var(--accent)] outline-none py-0"
+          />
+        ) : (
+          <h4
+            className="text-sm font-medium text-[--text-primary] leading-snug flex-1 min-w-0 group-hover:text-white transition-colors cursor-text"
+            onDoubleClick={handleTitleDoubleClick}
+          >
+            {task.title}
+          </h4>
+        )}
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {onArchive && (
             <button

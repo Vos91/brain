@@ -109,6 +109,17 @@ export function TasksView() {
     }
   }, [addTask]);
 
+  const handleTitleUpdate = useCallback(async (taskId: string, newTitle: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      await editTask({ ...task, title: newTitle, updated_at: new Date().toISOString() });
+    }
+  }, [tasks, editTask]);
+
+  const handleQuickComplete = useCallback(async (taskId: string) => {
+    await moveTask(taskId, 'complete');
+  }, [moveTask]);
+
   const handleNewTaskShortcut = useCallback(() => setShowAddForm(true), []);
   
   const closeModal = useCallback(() => {
@@ -205,6 +216,8 @@ export function TasksView() {
           onTaskClick={handleTaskClick}
           onArchiveTask={handleArchiveTask}
           onArchiveAllComplete={handleArchiveAllComplete}
+          onTitleUpdate={handleTitleUpdate}
+          onQuickComplete={handleQuickComplete}
         />
       </ErrorBoundary>
       

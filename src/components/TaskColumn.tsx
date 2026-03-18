@@ -21,7 +21,15 @@ interface TaskColumnProps {
   isMobile: boolean;
   onArchiveTask?: (taskId: string) => void;
   onArchiveAll?: () => void;
+  onTitleUpdate?: (taskId: string, newTitle: string) => void;
+  onQuickComplete?: (taskId: string) => void;
 }
+
+const EMPTY_STATE_MESSAGES: Record<string, string> = {
+  "todo": "📋 Geen taken in de planning",
+  "in-progress": "🚀 Niets in uitvoering — begin met slepen!",
+  "complete": "✨ Nog niets afgerond",
+};
 
 const MAX_VISIBLE_COMPLETE = 5;
 
@@ -67,19 +75,25 @@ function TaskListContent({
   tasks,
   visibleTasks,
   isCompleteColumn,
+  columnId,
   onTaskClick,
   onArchiveTask,
+  onTitleUpdate,
+  onQuickComplete,
 }: {
   tasks: Task[];
   visibleTasks: Task[];
   isCompleteColumn: boolean;
+  columnId: TaskStatus;
   onTaskClick: (task: Task) => void;
   onArchiveTask?: (taskId: string) => void;
+  onTitleUpdate?: (taskId: string, newTitle: string) => void;
+  onQuickComplete?: (taskId: string) => void;
 }) {
   if (tasks.length === 0) {
     return (
-      <div className="text-center py-8 text-[var(--text-muted)] text-sm">
-        {NL.noTasks}
+      <div className="text-center py-8 text-[var(--text-muted)] text-sm border-2 border-dashed border-[var(--border)] rounded-xl">
+        <p className="px-4">{EMPTY_STATE_MESSAGES[columnId] || NL.noTasks}</p>
       </div>
     );
   }
@@ -92,6 +106,8 @@ function TaskListContent({
           task={task}
           onClick={() => onTaskClick(task)}
           onArchive={isCompleteColumn && onArchiveTask ? () => onArchiveTask(task.id) : undefined}
+          onTitleUpdate={onTitleUpdate}
+          onQuickComplete={onQuickComplete}
         />
       ))}
     </>
@@ -109,6 +125,8 @@ export function TaskColumn({
   isMobile,
   onArchiveTask,
   onArchiveAll,
+  onTitleUpdate,
+  onQuickComplete,
 }: TaskColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
   const [showAll, setShowAll] = useState(false);
@@ -137,8 +155,11 @@ export function TaskColumn({
               tasks={tasks}
               visibleTasks={visibleTasks}
               isCompleteColumn={isCompleteColumn}
+              columnId={id}
               onTaskClick={onTaskClick}
               onArchiveTask={onArchiveTask}
+              onTitleUpdate={onTitleUpdate}
+              onQuickComplete={onQuickComplete}
             />
           </SortableContext>
           
@@ -212,8 +233,11 @@ export function TaskColumn({
             tasks={tasks}
             visibleTasks={visibleTasks}
             isCompleteColumn={isCompleteColumn}
+            columnId={id}
             onTaskClick={onTaskClick}
             onArchiveTask={onArchiveTask}
+            onTitleUpdate={onTitleUpdate}
+            onQuickComplete={onQuickComplete}
           />
         </SortableContext>
         
