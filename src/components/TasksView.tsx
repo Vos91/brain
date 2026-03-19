@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import type { Task } from "@/types";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { useTasks } from "@/hooks/useTasks";
@@ -25,11 +25,21 @@ export function TasksView() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [uiFilters, setUiFilters] = useState<UIFilters>({
-    priority: null,
-    category: null,
-    assignee: null,
-    hasDueDate: null,
+  const [uiFilters, setUiFilters] = useState<UIFilters>(() => {
+    if (typeof window === "undefined") return { priority: null, category: null, assignee: null, hasDueDate: null };
+    try {
+      const stored = localStorage.getItem("brainTaskFilters");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return {
+          priority: parsed.priority ?? null,
+          category: parsed.category ?? null,
+          assignee: parsed.assignee ?? null,
+          hasDueDate: parsed.hasDueDate ?? null,
+        };
+      }
+    } catch { /* noop */ }
+    return { priority: null, category: null, assignee: null, hasDueDate: null };
   });
 
   const isConfigured = isSupabaseConfigured();
@@ -65,7 +75,34 @@ export function TasksView() {
       assignee: newFilters.assignee,
       hasDueDate: newFilters.hasDueDate,
     });
+    try {
+      localStorage.setItem("brainTaskFilters", JSON.stringify(newFilters));
+    } catch { /* noop */ }
   }, [setFilters]);
+
+  // Apply persisted filters on mount
+  useEffect(() => {
+    if (uiFilters.priority || uiFilters.category || uiFilters.assignee || uiFilters.hasDueDate !== null) {
+      setFilters({
+        priority: uiFilters.priority,
+        category: uiFilters.category,
+        assignee: uiFilters.assignee,
+        hasDueDate: uiFilters.hasDueDate,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Dynamic page title with open task count
+  const openTaskCount = useMemo(
+    () => tasks.filter(t => t.status === 'todo' || t.status === 'in-progress').length,
+    [tasks]
+  );
+
+  useEffect(() => {
+    document.title = openTaskCount > 0 ? `(${openTaskCount}) 2nd Brain` : '2nd Brain';
+    return () => { document.title = '2nd Brain'; };
+  }, [openTaskCount]);
 
   // Separate active and archived tasks
   const activeTasks = useMemo(() => tasks.filter(t => t.status !== 'archived'), [tasks]);

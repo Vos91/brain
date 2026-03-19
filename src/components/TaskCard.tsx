@@ -93,6 +93,17 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return null;
     const date = new Date(dateStr);
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dateStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diffMs = dateStart.getTime() - todayStart.getTime();
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Vandaag";
+    if (diffDays === 1) return "Morgen";
+    if (diffDays === -1) return "Gisteren";
+    if (diffDays > 1 && diffDays <= 7) return `Over ${diffDays} dagen`;
+    if (diffDays < -1 && diffDays >= -7) return `${Math.abs(diffDays)} dagen geleden`;
     return date.toLocaleDateString("nl-NL", { month: "short", day: "numeric" });
   };
 
@@ -100,8 +111,10 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
     if (!task.due_date || task.status === "complete") return null;
     const now = new Date();
     const due = new Date(task.due_date);
-    const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dueStart = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+    const diffDays = Math.round((dueStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24));
+
     if (diffDays < 0) return "overdue";
     if (diffDays <= 2) return "soon";
     return null;

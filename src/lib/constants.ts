@@ -72,6 +72,13 @@ export const NL = {
   contentPreview: 'Inhoud',
   sourceUrl: 'Bron URL',
   
+  // Sortering
+  sortDefault: 'Standaard',
+  sortPriority: 'Prioriteit',
+  sortDueDate: 'Deadline',
+  sortNewest: 'Nieuwste eerst',
+  sortLabel: 'Sorteren',
+
   // Archivering
   archive: 'Archiveren',
   archiveAll: 'Archiveer voltooide',
