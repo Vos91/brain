@@ -18,6 +18,7 @@ import { NL } from "@/lib/constants";
 import { ThemeToggle } from "./ThemeToggle";
 import { ExportButton } from "./ExportButton";
 import { TaskStats } from "./TaskStats";
+import { toast } from "./Toaster";
 
 export function TasksView() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -125,8 +126,18 @@ export function TasksView() {
   }, [removeTask]);
 
   const handleArchiveTask = useCallback(async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
     await moveTask(taskId, 'archived' as const);
-  }, [moveTask]);
+    if (task) {
+      toast(NL.taskArchived, {
+        action: {
+          label: NL.undoArchive,
+          onClick: () => moveTask(taskId, task.status),
+        },
+        duration: 5000,
+      });
+    }
+  }, [moveTask, tasks]);
 
   const handleArchiveAllComplete = useCallback(async () => {
     const completeTasks = tasks.filter(t => t.status === 'complete');
@@ -156,6 +167,25 @@ export function TasksView() {
   const handleQuickComplete = useCallback(async (taskId: string) => {
     await moveTask(taskId, 'complete');
   }, [moveTask]);
+
+  const handleDuplicateTask = useCallback(async (task: Task) => {
+    const duplicated = {
+      title: `${task.title} (kopie)`,
+      description: task.description,
+      status: 'todo' as const,
+      priority: task.priority,
+      category: task.category,
+      assignee: task.assignee,
+      notes: task.notes,
+      due_date: task.due_date,
+      tags: task.tags,
+      subtasks: task.subtasks?.map(s => ({ ...s, id: crypto.randomUUID(), completed: false })),
+    };
+    const success = await addTask(duplicated);
+    if (success) {
+      toast.success(NL.duplicated);
+    }
+  }, [addTask]);
 
   const handleNewTaskShortcut = useCallback(() => setShowAddForm(true), []);
   
@@ -275,6 +305,7 @@ export function TasksView() {
         onClose={closeModal}
         onSave={handleSaveTask}
         onDelete={handleDeleteTask}
+        onDuplicate={handleDuplicateTask}
       />
     </div>
   );

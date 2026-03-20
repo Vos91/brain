@@ -129,6 +129,12 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
     : null;
   const priorityInfo = PRIORITIES.find((p) => p.id === task.priority);
 
+  const priorityBorderColor = {
+    high: "border-l-rose-500",
+    medium: "border-l-amber-500",
+    low: "border-l-emerald-500",
+  }[task.priority];
+
   return (
     <div
       ref={setNodeRef}
@@ -137,7 +143,7 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
       onClick={onClick}
       className={`
         group
-        bg-[#131920] border border-[#1e2730] rounded-xl
+        bg-[#131920] border border-[#1e2730] border-l-[3px] ${priorityBorderColor} rounded-xl
         p-4
         transition-all duration-200
         hover:border-[#2a3441] hover:bg-[#1a2129]

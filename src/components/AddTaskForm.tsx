@@ -12,6 +12,7 @@ import {
   ASSIGNEE_COLORS,
 } from "@/lib/constants";
 import { QuickDatePicker } from "./QuickDatePicker";
+import { TASK_TEMPLATES } from "@/lib/templates";
 
 interface AddTaskFormProps {
   onAdd: (task: Omit<Task, "id" | "created_at" | "updated_at" | "completed_at">) => void;
@@ -25,6 +26,7 @@ export function AddTaskForm({ onAdd, onCancel }: AddTaskFormProps) {
   const [category, setCategory] = useState<TaskCategory>("dev");
   const [assignee, setAssignee] = useState<Assignee | null>(null);
   const [dueDate, setDueDate] = useState("");
+  const [showTemplates, setShowTemplates] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +54,47 @@ export function AddTaskForm({ onAdd, onCancel }: AddTaskFormProps) {
 
   return (
     <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4 animate-fade-in">
+      {/* Template picker */}
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => setShowTemplates(!showTemplates)}
+          className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+        >
+          <span>📋</span>
+          <span>{NL.templates}</span>
+          <svg
+            className={`w-3 h-3 transition-transform ${showTemplates ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {showTemplates && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {TASK_TEMPLATES.map((tpl) => (
+              <button
+                key={tpl.id}
+                type="button"
+                onClick={() => {
+                  setTitle(tpl.title);
+                  setDescription(tpl.description);
+                  setPriority(tpl.priority);
+                  setCategory(tpl.category);
+                  if (tpl.assignee) setAssignee(tpl.assignee);
+                  setShowTemplates(false);
+                }}
+                className="px-3 py-1.5 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-lg text-xs font-medium text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+              >
+                {tpl.emoji} {tpl.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Title */}
         <div>

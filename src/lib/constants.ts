@@ -87,6 +87,18 @@ export const NL = {
   restore: 'Herstellen',
   showArchived: 'Toon archief',
   hideArchived: 'Verberg archief',
+
+  // Dupliceren
+  duplicate: 'Dupliceren',
+  duplicated: 'Taak gedupliceerd',
+
+  // Templates
+  templates: 'Sjablonen',
+  useTemplate: 'Gebruik sjabloon',
+
+  // Undo
+  undoArchive: 'Ongedaan maken',
+  taskArchived: 'Taak gearchiveerd',
 } as const;
 
 export const ASSIGNEES: { id: Assignee; label: string; emoji: string }[] = [
