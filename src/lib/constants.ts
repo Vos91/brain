@@ -99,6 +99,20 @@ export const NL = {
   // Undo
   undoArchive: 'Ongedaan maken',
   taskArchived: 'Taak gearchiveerd',
+
+  // Unsaved changes
+  unsavedChanges: 'Je hebt onopgeslagen wijzigingen. Sluiten zonder opslaan?',
+
+  // Relative time
+  justNow: 'Zojuist',
+  minutesAgo: 'minuten geleden',
+  oneMinuteAgo: '1 minuut geleden',
+  hoursAgo: 'uur geleden',
+  oneHourAgo: '1 uur geleden',
+  daysAgo: 'dagen geleden',
+  oneDayAgo: '1 dag geleden',
+  weeksAgo: 'weken geleden',
+  oneWeekAgo: '1 week geleden',
 } as const;
 
 export const ASSIGNEES: { id: Assignee; label: string; emoji: string }[] = [

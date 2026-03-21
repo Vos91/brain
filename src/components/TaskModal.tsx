@@ -57,6 +57,26 @@ interface TaskModalProps {
   onDuplicate?: (task: Task) => void;
 }
 
+function getRelativeTime(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffMs = now - then;
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  const diffWeeks = Math.floor(diffDays / 7);
+
+  if (diffMinutes < 1) return NL.justNow;
+  if (diffMinutes === 1) return NL.oneMinuteAgo;
+  if (diffMinutes < 60) return `${diffMinutes} ${NL.minutesAgo}`;
+  if (diffHours === 1) return NL.oneHourAgo;
+  if (diffHours < 24) return `${diffHours} ${NL.hoursAgo}`;
+  if (diffDays === 1) return NL.oneDayAgo;
+  if (diffDays < 7) return `${diffDays} ${NL.daysAgo}`;
+  if (diffWeeks === 1) return NL.oneWeekAgo;
+  return `${diffWeeks} ${NL.weeksAgo}`;
+}
+
 export function TaskModal({
   task,
   isOpen,
@@ -74,10 +94,27 @@ export function TaskModal({
     }
   }, [task]);
 
+  // Check if task has been modified (dirty state)
+  const isDirty = useMemo(() => {
+    if (!task || !editedTask) return false;
+    return JSON.stringify(task) !== JSON.stringify(editedTask);
+  }, [task, editedTask]);
+
+  // Close with unsaved changes check
+  const handleClose = useCallback(() => {
+    if (isDirty) {
+      if (confirm(NL.unsavedChanges)) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  }, [isDirty, onClose]);
+
   // Escape key handler
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === "Escape" && isOpen) {
-      onClose();
+      handleClose();
     }
     // Ctrl/Cmd + S to save
     if ((e.ctrlKey || e.metaKey) && e.key === "s" && isOpen && editedTask) {
@@ -90,7 +127,7 @@ export function TaskModal({
         toast.error(validation.error);
       }
     }
-  }, [isOpen, onClose, editedTask, onSave]);
+  }, [isOpen, handleClose, onClose, editedTask, onSave]);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -140,7 +177,7 @@ export function TaskModal({
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={handleClose}
       />
 
       {/* Modal */}
@@ -151,7 +188,7 @@ export function TaskModal({
             {NL.editTask}
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 hover:bg-[var(--bg-tertiary)] rounded-lg transition-colors"
           >
             <svg
@@ -401,10 +438,10 @@ export function TaskModal({
 
           {/* Metadata */}
           <div className="pt-4 border-t border-[var(--border)] text-xs text-[var(--text-muted)] space-y-1">
-            <p>Aangemaakt: {formatDate(editedTask.created_at)}</p>
-            <p>Bijgewerkt: {formatDate(editedTask.updated_at)}</p>
+            <p>Aangemaakt: <span title={formatDate(editedTask.created_at)}>{getRelativeTime(editedTask.created_at)}</span></p>
+            <p>Bijgewerkt: <span title={formatDate(editedTask.updated_at)}>{getRelativeTime(editedTask.updated_at)}</span></p>
             {editedTask.completed_at && (
-              <p>Voltooid: {formatDate(editedTask.completed_at)}</p>
+              <p>Voltooid: <span title={formatDate(editedTask.completed_at)}>{getRelativeTime(editedTask.completed_at)}</span></p>
             )}
           </div>
         </div>
@@ -430,7 +467,7 @@ export function TaskModal({
           )}
           <div className="flex-1" />
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="px-4 py-2 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--border)] rounded-lg transition-colors text-sm font-medium"
           >
             {NL.cancel}

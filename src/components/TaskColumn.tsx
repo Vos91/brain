@@ -300,16 +300,53 @@ export function TaskColumn({
     );
   }
 
-  // Desktop: Collapsed state
-  if (isCollapsed) {
-    return (
-      <div className="flex-shrink-0 flex flex-col bg-[var(--bg-primary)] rounded-xl border border-[var(--border)] w-14 transition-all duration-200">
-        <button
-          onClick={onToggleCollapse}
-          className="flex items-center justify-center gap-2 p-4 border-b border-[var(--border)] hover:bg-[var(--bg-tertiary)] transition-colors"
-        >
-          <span className="text-lg">{emoji}</span>
-        </button>
+  // Desktop: Single container with smooth transition
+  return (
+    <div
+      className={`
+        flex-shrink-0 flex flex-col bg-[var(--bg-primary)] rounded-xl
+        border border-[var(--border)] transition-all duration-300 ease-in-out overflow-hidden
+        ${isCollapsed ? "w-14" : "w-80"}
+        ${!isCollapsed && isOver ? "ring-2 ring-[var(--accent)] ring-opacity-50" : ""}
+      `}
+      style={{ minWidth: isCollapsed ? 56 : 320, maxWidth: isCollapsed ? 56 : 320 }}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2 p-4 border-b border-[var(--border)]">
+        {isCollapsed ? (
+          <button
+            onClick={onToggleCollapse}
+            className="flex items-center justify-center w-full hover:bg-[var(--bg-tertiary)] transition-colors rounded-lg"
+          >
+            <span className="text-lg">{emoji}</span>
+          </button>
+        ) : (
+          <>
+            <button
+              onClick={onToggleCollapse}
+              className="flex items-center gap-2 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+            >
+              <span className="text-lg">{emoji}</span>
+              <span className="font-medium text-[var(--text-primary)] whitespace-nowrap">{title}</span>
+              <span className="text-sm text-[var(--text-muted)] bg-[var(--bg-tertiary)] px-2 py-0.5 rounded-full">
+                {sortedTasks.length}
+              </span>
+            </button>
+            <SortDropdown columnId={id} sortOption={sortOption} onSortChange={handleSortChange} />
+            <button
+              onClick={onToggleCollapse}
+              className="p-1 hover:bg-[var(--bg-tertiary)] rounded transition-colors"
+            >
+              <svg className="w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Content */}
+      {isCollapsed ? (
         <div className="flex-1 flex flex-col items-center justify-center py-4">
           <span className="text-sm text-[var(--text-muted)] bg-[var(--bg-tertiary)] px-2 py-1 rounded-full mb-3">
             {tasks.length}
@@ -321,67 +358,32 @@ export function TaskColumn({
             {title}
           </span>
         </div>
-      </div>
-    );
-  }
-
-  // Desktop: Expanded state
-  return (
-    <div
-      className={`
-        flex-shrink-0 flex flex-col bg-[var(--bg-primary)] rounded-xl
-        border border-[var(--border)] w-80 transition-all duration-200
-        ${isOver ? "ring-2 ring-[var(--accent)] ring-opacity-50" : ""}
-      `}
-    >
-      {/* Header */}
-      <div className="flex items-center gap-2 p-4 border-b border-[var(--border)]">
-        <button
-          onClick={onToggleCollapse}
-          className="flex items-center gap-2 flex-1 min-w-0 hover:opacity-80 transition-opacity"
-        >
-          <span className="text-lg">{emoji}</span>
-          <span className="font-medium text-[var(--text-primary)]">{title}</span>
-          <span className="text-sm text-[var(--text-muted)] bg-[var(--bg-tertiary)] px-2 py-0.5 rounded-full">
-            {sortedTasks.length}
-          </span>
-        </button>
-        <SortDropdown columnId={id} sortOption={sortOption} onSortChange={handleSortChange} />
-        <button
-          onClick={onToggleCollapse}
-          className="p-1 hover:bg-[var(--bg-tertiary)] rounded transition-colors"
-        >
-          <svg className="w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Task List */}
-      <div ref={setNodeRef} className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[200px]">
-        {showArchiveButton && (
-          <div className="mb-2">
-            <ArchiveAllButton onClick={onArchiveAll} size="xs" />
-          </div>
-        )}
-        
-        <SortableContext items={visibleTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-          <TaskListContent
-            tasks={tasks}
-            visibleTasks={visibleTasks}
-            isCompleteColumn={isCompleteColumn}
-            columnId={id}
-            onTaskClick={onTaskClick}
-            onArchiveTask={onArchiveTask}
-            onTitleUpdate={onTitleUpdate}
-            onQuickComplete={onQuickComplete}
-          />
-        </SortableContext>
-        
-        {hasHiddenTasks && (
-          <ShowMoreButton showAll={showAll} hiddenCount={hiddenCount} onToggle={() => setShowAll(!showAll)} />
-        )}
-      </div>
+      ) : (
+        <div ref={setNodeRef} className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[200px]">
+          {showArchiveButton && (
+            <div className="mb-2">
+              <ArchiveAllButton onClick={onArchiveAll} size="xs" />
+            </div>
+          )}
+          
+          <SortableContext items={visibleTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+            <TaskListContent
+              tasks={tasks}
+              visibleTasks={visibleTasks}
+              isCompleteColumn={isCompleteColumn}
+              columnId={id}
+              onTaskClick={onTaskClick}
+              onArchiveTask={onArchiveTask}
+              onTitleUpdate={onTitleUpdate}
+              onQuickComplete={onQuickComplete}
+            />
+          </SortableContext>
+          
+          {hasHiddenTasks && (
+            <ShowMoreButton showAll={showAll} hiddenCount={hiddenCount} onToggle={() => setShowAll(!showAll)} />
+          )}
+        </div>
+      )}
     </div>
   );
 }

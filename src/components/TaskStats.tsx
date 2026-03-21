@@ -1,6 +1,7 @@
 "use client";
 
 import type { Task } from "@/types";
+import { ASSIGNEES } from "@/lib/constants";
 
 interface TaskStatsProps {
   tasks: Task[];
@@ -45,6 +46,18 @@ export function TaskStats({ tasks }: TaskStatsProps) {
           <span>{stats.overdue} te laat</span>
         </div>
       )}
+      <div className="flex items-center gap-3 border-l border-[var(--border)] pl-4 ml-2">
+        {ASSIGNEES.map((assignee) => {
+          const count = activeTasks.filter(t => t.assignee === assignee.id).length;
+          return (
+            <div key={assignee.id} className="flex items-center gap-1 text-[var(--text-muted)]">
+              <span>{assignee.emoji}</span>
+              <span>{assignee.label}:</span>
+              <span className="font-medium text-[var(--text-primary)]">{count}</span>
+            </div>
+          );
+        })}
+      </div>
       <div className="ml-auto flex items-center gap-2 text-[var(--text-muted)]">
         <div className="w-20 h-1.5 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
           <div 
