@@ -103,6 +103,20 @@ export const NL = {
   // Unsaved changes
   unsavedChanges: 'Je hebt onopgeslagen wijzigingen. Sluiten zonder opslaan?',
 
+  // Stale task indicator
+  staleTaskTooltip: 'Niet bijgewerkt in {days} dagen',
+
+  // Quick move
+  moveToInProgress: 'Verplaats naar bezig',
+  moveToTodo: 'Verplaats naar te doen',
+  moveToComplete: 'Verplaats naar voltooid',
+
+  // Weekly stats
+  completedThisWeek: 'deze week voltooid',
+
+  // Column quick add
+  quickAdd: 'Snel toevoegen',
+
   // Relative time
   justNow: 'Zojuist',
   minutesAgo: 'minuten geleden',

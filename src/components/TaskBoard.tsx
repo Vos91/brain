@@ -25,6 +25,8 @@ interface TaskBoardProps {
   onArchiveAllComplete: () => void;
   onTitleUpdate?: (taskId: string, newTitle: string) => void;
   onQuickComplete?: (taskId: string) => void;
+  onQuickMove?: (taskId: string, newStatus: TaskStatus) => void;
+  onQuickAdd?: (status: TaskStatus) => void;
 }
 
 type CollapsedState = Record<'todo' | 'in-progress' | 'complete', boolean>;
@@ -50,7 +52,7 @@ const getInitialColumn = (): number => {
   return 0;
 };
 
-export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArchiveAllComplete, onTitleUpdate, onQuickComplete }: TaskBoardProps) {
+export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArchiveAllComplete, onTitleUpdate, onQuickComplete, onQuickMove, onQuickAdd }: TaskBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<CollapsedState>(getInitialCollapsed);
   const [activeColumnIndex, setActiveColumnIndex] = useState(getInitialColumn);
@@ -246,6 +248,8 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
               onArchiveAll={onArchiveAllComplete}
               onTitleUpdate={onTitleUpdate}
               onQuickComplete={onQuickComplete}
+              onQuickMove={onQuickMove}
+              onQuickAdd={onQuickAdd}
             />
           </div>
 
@@ -292,6 +296,8 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
               onArchiveAll={onArchiveAllComplete}
               onTitleUpdate={onTitleUpdate}
               onQuickComplete={onQuickComplete}
+              onQuickMove={onQuickMove}
+              onQuickAdd={onQuickAdd}
             />
           );
         })}

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Task } from "@/types";
-import { ASSIGNEES } from "@/lib/constants";
+import { ASSIGNEES, NL } from "@/lib/constants";
 
 interface TaskStatsProps {
   tasks: Task[];
@@ -19,6 +19,19 @@ export function TaskStats({ tasks }: TaskStatsProps) {
       return new Date(t.due_date) < new Date();
     }).length,
   };
+
+  // Weekly completion count (Monday-Sunday)
+  const completedThisWeek = (() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ...
+    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+    return tasks.filter(t => {
+      if (!t.completed_at) return false;
+      return new Date(t.completed_at) >= monday;
+    }).length;
+  })();
 
   const completionRate = activeTasks.length > 0 
     ? Math.round((stats.complete / activeTasks.length) * 100) 
@@ -44,6 +57,12 @@ export function TaskStats({ tasks }: TaskStatsProps) {
         <div className="flex items-center gap-1.5 text-rose-400 font-medium">
           <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse"></span>
           <span>{stats.overdue} te laat</span>
+        </div>
+      )}
+      {completedThisWeek > 0 && (
+        <div className="flex items-center gap-1.5 text-[var(--text-muted)]">
+          <span>🏆</span>
+          <span>{completedThisWeek} {NL.completedThisWeek}</span>
         </div>
       )}
       <div className="flex items-center gap-3 border-l border-[var(--border)] pl-4 ml-2">

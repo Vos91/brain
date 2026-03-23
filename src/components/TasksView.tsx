@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import type { Task } from "@/types";
+import type { Task, TaskStatus } from "@/types";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { useTasks } from "@/hooks/useTasks";
 import { TaskBoard } from "./TaskBoard";
@@ -24,6 +24,7 @@ export function TasksView() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [addFormInitialStatus, setAddFormInitialStatus] = useState<TaskStatus>("todo");
   const [showArchived, setShowArchived] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [uiFilters, setUiFilters] = useState<UIFilters>(() => {
@@ -168,6 +169,15 @@ export function TasksView() {
     await moveTask(taskId, 'complete');
   }, [moveTask]);
 
+  const handleQuickMove = useCallback(async (taskId: string, newStatus: TaskStatus) => {
+    await moveTask(taskId, newStatus);
+  }, [moveTask]);
+
+  const handleQuickAdd = useCallback((status: TaskStatus) => {
+    setAddFormInitialStatus(status);
+    setShowAddForm(true);
+  }, []);
+
   const handleDuplicateTask = useCallback(async (task: Task) => {
     const duplicated = {
       title: `${task.title} (kopie)`,
@@ -187,7 +197,10 @@ export function TasksView() {
     }
   }, [addTask]);
 
-  const handleNewTaskShortcut = useCallback(() => setShowAddForm(true), []);
+  const handleNewTaskShortcut = useCallback(() => {
+    setAddFormInitialStatus("todo");
+    setShowAddForm(true);
+  }, []);
   
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
@@ -233,7 +246,7 @@ export function TasksView() {
 
       <div className="p-4 pb-0 space-y-3">
         {showAddForm ? (
-          <AddTaskForm onAdd={handleAddTask} onCancel={() => setShowAddForm(false)} />
+          <AddTaskForm onAdd={handleAddTask} onCancel={() => { setShowAddForm(false); setAddFormInitialStatus("todo"); }} initialStatus={addFormInitialStatus} />
         ) : (
           <>
             <div className="flex flex-col sm:flex-row gap-3">
@@ -285,6 +298,8 @@ export function TasksView() {
           onArchiveAllComplete={handleArchiveAllComplete}
           onTitleUpdate={handleTitleUpdate}
           onQuickComplete={handleQuickComplete}
+          onQuickMove={handleQuickMove}
+          onQuickAdd={handleQuickAdd}
         />
       </ErrorBoundary>
       

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Task, Priority, TaskCategory, Assignee } from "@/types";
+import type { Task, Priority, TaskCategory, Assignee, TaskStatus } from "@/types";
 import {
   NL,
   PRIORITIES,
@@ -17,9 +17,10 @@ import { TASK_TEMPLATES } from "@/lib/templates";
 interface AddTaskFormProps {
   onAdd: (task: Omit<Task, "id" | "created_at" | "updated_at" | "completed_at">) => void;
   onCancel: () => void;
+  initialStatus?: TaskStatus;
 }
 
-export function AddTaskForm({ onAdd, onCancel }: AddTaskFormProps) {
+export function AddTaskForm({ onAdd, onCancel, initialStatus = "todo" }: AddTaskFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
@@ -35,7 +36,7 @@ export function AddTaskForm({ onAdd, onCancel }: AddTaskFormProps) {
     onAdd({
       title: title.trim(),
       description: description.trim(),
-      status: "todo",
+      status: initialStatus,
       priority,
       category,
       assignee,

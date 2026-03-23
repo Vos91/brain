@@ -15,15 +15,18 @@ import {
   getTagColorClass,
 } from "@/lib/constants";
 
+import type { TaskStatus } from "@/types";
+
 interface TaskCardProps {
   task: Task;
   onClick: () => void;
   onArchive?: () => void;
   onTitleUpdate?: (taskId: string, newTitle: string) => void;
   onQuickComplete?: (taskId: string) => void;
+  onQuickMove?: (taskId: string, newStatus: TaskStatus) => void;
 }
 
-export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickComplete }: TaskCardProps) {
+export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickComplete, onQuickMove }: TaskCardProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -71,6 +74,33 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
         setIsCompleting(false);
       }, 300);
     }
+  };
+
+  // Stale task calculation
+  const staleDays = (() => {
+    if (task.status === "complete" || task.status === "archived") return 0;
+    if (!task.updated_at) return 0;
+    const now = new Date();
+    const updated = new Date(task.updated_at);
+    const diffMs = now.getTime() - updated.getTime();
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  })();
+  const isStale = staleDays >= 7;
+
+  // Quick move targets
+  const canMoveForward = task.status === "todo" || task.status === "in-progress";
+  const canMoveBackward = task.status === "in-progress" || task.status === "complete";
+  const nextStatus: TaskStatus | null = task.status === "todo" ? "in-progress" : task.status === "in-progress" ? "complete" : null;
+  const prevStatus: TaskStatus | null = task.status === "in-progress" ? "todo" : task.status === "complete" ? "in-progress" : null;
+
+  const handleQuickMoveForward = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onQuickMove && nextStatus) onQuickMove(task.id, nextStatus);
+  };
+
+  const handleQuickMoveBackward = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onQuickMove && prevStatus) onQuickMove(task.id, prevStatus);
   };
 
   const {
@@ -211,6 +241,30 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
           </h4>
         )}
         <div className="flex items-center gap-1.5 flex-shrink-0">
+          {/* Quick move backward arrow - hidden on mobile */}
+          {onQuickMove && canMoveBackward && prevStatus && (
+            <button
+              onClick={handleQuickMoveBackward}
+              className="hidden md:flex opacity-0 group-hover:opacity-100 p-1 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-tertiary)] rounded-lg transition-all"
+              title={prevStatus === "todo" ? NL.moveToTodo : NL.moveToInProgress}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+          {/* Quick move forward arrow - hidden on mobile */}
+          {onQuickMove && canMoveForward && nextStatus && (
+            <button
+              onClick={handleQuickMoveForward}
+              className="hidden md:flex opacity-0 group-hover:opacity-100 p-1 text-[var(--text-muted)] hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-all"
+              title={nextStatus === "in-progress" ? NL.moveToInProgress : NL.moveToComplete}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
           {onArchive && (
             <button
               onClick={(e) => {
@@ -293,24 +347,34 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
           {categoryInfo?.emoji} {categoryInfo?.label}
         </span>
 
-        {task.due_date && (
-          <span
-            className={`
-              text-xs px-2.5 py-1 rounded-lg flex items-center gap-1
-              ${
-                dueStatus === "overdue"
-                  ? "text-rose-400 bg-rose-500/10 border border-rose-500/20 font-medium"
-                  : dueStatus === "soon"
-                  ? "text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium"
-                  : "text-[--text-muted] bg-[#1a2129]"
-              }
-            `}
-          >
-            📅 {formatDate(task.due_date)}
-            {dueStatus === "overdue" && <span className="due-badge due-badge-overdue ml-1">Te laat</span>}
-            {dueStatus === "soon" && <span className="due-badge due-badge-warning ml-1">Bijna</span>}
-          </span>
-        )}
+        <div className="flex items-center gap-1.5">
+          {isStale && (
+            <span
+              className="text-xs px-1.5 py-1 rounded-lg flex items-center gap-1 text-amber-400/70 bg-amber-500/5 cursor-default"
+              title={NL.staleTaskTooltip.replace('{days}', String(staleDays))}
+            >
+              💤
+            </span>
+          )}
+          {task.due_date && (
+            <span
+              className={`
+                text-xs px-2.5 py-1 rounded-lg flex items-center gap-1
+                ${
+                  dueStatus === "overdue"
+                    ? "text-rose-400 bg-rose-500/10 border border-rose-500/20 font-medium"
+                    : dueStatus === "soon"
+                    ? "text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium"
+                    : "text-[--text-muted] bg-[#1a2129]"
+                }
+              `}
+            >
+              📅 {formatDate(task.due_date)}
+              {dueStatus === "overdue" && <span className="due-badge due-badge-overdue ml-1">Te laat</span>}
+              {dueStatus === "soon" && <span className="due-badge due-badge-warning ml-1">Bijna</span>}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Metadata row: notes indicator + assignee */}

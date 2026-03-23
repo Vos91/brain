@@ -59,6 +59,8 @@ interface TaskColumnProps {
   onArchiveAll?: () => void;
   onTitleUpdate?: (taskId: string, newTitle: string) => void;
   onQuickComplete?: (taskId: string) => void;
+  onQuickMove?: (taskId: string, newStatus: TaskStatus) => void;
+  onQuickAdd?: (status: TaskStatus) => void;
 }
 
 const EMPTY_STATE_MESSAGES: Record<string, string> = {
@@ -116,6 +118,7 @@ function TaskListContent({
   onArchiveTask,
   onTitleUpdate,
   onQuickComplete,
+  onQuickMove,
 }: {
   tasks: Task[];
   visibleTasks: Task[];
@@ -125,6 +128,7 @@ function TaskListContent({
   onArchiveTask?: (taskId: string) => void;
   onTitleUpdate?: (taskId: string, newTitle: string) => void;
   onQuickComplete?: (taskId: string) => void;
+  onQuickMove?: (taskId: string, newStatus: TaskStatus) => void;
 }) {
   if (tasks.length === 0) {
     return (
@@ -144,6 +148,7 @@ function TaskListContent({
           onArchive={isCompleteColumn && onArchiveTask ? () => onArchiveTask(task.id) : undefined}
           onTitleUpdate={onTitleUpdate}
           onQuickComplete={onQuickComplete}
+          onQuickMove={onQuickMove}
         />
       ))}
     </>
@@ -233,6 +238,8 @@ export function TaskColumn({
   onArchiveAll,
   onTitleUpdate,
   onQuickComplete,
+  onQuickMove,
+  onQuickAdd,
 }: TaskColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
   const [showAll, setShowAll] = useState(false);
@@ -289,6 +296,7 @@ export function TaskColumn({
               onArchiveTask={onArchiveTask}
               onTitleUpdate={onTitleUpdate}
               onQuickComplete={onQuickComplete}
+              onQuickMove={onQuickMove}
             />
           </SortableContext>
           
@@ -332,6 +340,20 @@ export function TaskColumn({
                 {sortedTasks.length}
               </span>
             </button>
+            {onQuickAdd && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickAdd(id);
+                }}
+                className="p-1 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-tertiary)] rounded transition-colors"
+                title={NL.quickAdd}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            )}
             <SortDropdown columnId={id} sortOption={sortOption} onSortChange={handleSortChange} />
             <button
               onClick={onToggleCollapse}
@@ -376,6 +398,7 @@ export function TaskColumn({
               onArchiveTask={onArchiveTask}
               onTitleUpdate={onTitleUpdate}
               onQuickComplete={onQuickComplete}
+              onQuickMove={onQuickMove}
             />
           </SortableContext>
           
