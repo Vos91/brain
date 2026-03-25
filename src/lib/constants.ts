@@ -114,6 +114,20 @@ export const NL = {
   // Weekly stats
   completedThisWeek: 'deze week voltooid',
 
+  // Productivity streak
+  dayStreak: 'dagen streak',
+  oneDayStreak: '1 dag streak',
+
+  // Today/Tomorrow focus
+  dueToday: 'vandaag',
+  dueTomorrow: 'morgen',
+
+  // Average completion time
+  avgCompletionTime: 'gem. doorlooptijd',
+  days: 'dagen',
+  oneDay: '1 dag',
+  lessThanADay: '<1 dag',
+
   // Column quick add
   quickAdd: 'Snel toevoegen',
 

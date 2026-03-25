@@ -180,6 +180,7 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
         hover:shadow-lg hover:shadow-black/20
         active:scale-[0.98]
         ${isDragging ? "opacity-50 shadow-2xl scale-[1.02] rotate-1" : ""}
+        ${isOverdue ? "ring-1 ring-rose-500/30 animate-overdue-pulse" : ""}
       `}
     >
       {/* Header row: drag handle + title + priority + archive */}
