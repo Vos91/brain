@@ -18,6 +18,8 @@ import { NL } from "@/lib/constants";
 import { ThemeToggle } from "./ThemeToggle";
 import { ExportButton } from "./ExportButton";
 import { TaskStats } from "./TaskStats";
+import { ActivityLog } from "./ActivityLog";
+import { PomodoroTimer } from "./PomodoroTimer";
 import { toast } from "./Toaster";
 
 export function TasksView() {
@@ -94,6 +96,53 @@ export function TasksView() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Deadline notifications
+  useEffect(() => {
+    if (tasks.length === 0) return;
+
+    const requestPermission = () => {
+      if (typeof window === "undefined" || !("Notification" in window)) return;
+      if (Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    };
+
+    // Request on first user interaction
+    const handler = () => {
+      requestPermission();
+      window.removeEventListener("click", handler);
+    };
+    window.addEventListener("click", handler);
+
+    const checkDeadlines = () => {
+      if (Notification.permission !== "granted") return;
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+      const notified = new Set(JSON.parse(sessionStorage.getItem("notifiedDeadlines") || "[]") as string[]);
+
+      tasks.forEach((task) => {
+        if (!task.due_date || task.status === "complete" || task.status === "archived") return;
+        if (notified.has(task.id)) return;
+        const dueDate = task.due_date.slice(0, 10);
+        if (dueDate === todayStr) {
+          new Notification(NL.deadlineToday, { body: task.title });
+          notified.add(task.id);
+        }
+      });
+
+      sessionStorage.setItem("notifiedDeadlines", JSON.stringify([...notified]));
+    };
+
+    checkDeadlines();
+    const interval = setInterval(checkDeadlines, 60000);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("click", handler);
+    };
+  }, [tasks]);
 
   // Dynamic page title with open task count
   const openTaskCount = useMemo(
@@ -288,6 +337,7 @@ export function TasksView() {
       </div>
 
       <TaskStats tasks={tasks} />
+      <ActivityLog tasks={tasks} />
 
       <ErrorBoundary>
         <TaskBoard
@@ -313,6 +363,7 @@ export function TasksView() {
       )}
 
       {!showAddForm && <FloatingAddButton onClick={() => setShowAddForm(true)} />}
+      <PomodoroTimer />
 
       <TaskModal
         task={selectedTask}

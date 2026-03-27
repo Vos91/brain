@@ -141,6 +141,21 @@ export const NL = {
   oneDayAgo: '1 dag geleden',
   weeksAgo: 'weken geleden',
   oneWeekAgo: '1 week geleden',
+
+  // Pomodoro
+  focus: 'Focus',
+  pause: 'Pauze',
+  start: 'Start',
+  pauseTimer: 'Pauzeer',
+  reset: 'Reset',
+  pomodoroTitle: 'Pomodoro Timer',
+
+  // Deadline notifications
+  deadlineToday: '⏰ Deadline vandaag',
+
+  // Activity log
+  recentChanges: 'Recente wijzigingen',
+  inColumn: 'in',
 } as const;
 
 export const ASSIGNEES: { id: Assignee; label: string; emoji: string }[] = [

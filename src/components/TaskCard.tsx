@@ -14,6 +14,7 @@ import {
   NL,
   getTagColorClass,
 } from "@/lib/constants";
+import { spawnConfetti } from "@/lib/confetti";
 
 import type { TaskStatus } from "@/types";
 
@@ -69,6 +70,9 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
     e.stopPropagation();
     if (onQuickComplete && task.status !== "complete") {
       setIsCompleting(true);
+      // Confetti burst near the checkbox
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      spawnConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
       setTimeout(() => {
         onQuickComplete(task.id);
         setIsCompleting(false);
