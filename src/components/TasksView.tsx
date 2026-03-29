@@ -20,6 +20,7 @@ import { ExportButton } from "./ExportButton";
 import { TaskStats } from "./TaskStats";
 import { ActivityLog } from "./ActivityLog";
 import { PomodoroTimer } from "./PomodoroTimer";
+import { SortSelector } from "./SortSelector";
 import { toast } from "./Toaster";
 
 export function TasksView() {
@@ -29,6 +30,14 @@ export function TasksView() {
   const [addFormInitialStatus, setAddFormInitialStatus] = useState<TaskStatus>("todo");
   const [showArchived, setShowArchived] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [focusMode, setFocusMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try { return localStorage.getItem("brainFocusMode") === "true"; } catch { return false; }
+  });
+  const [sortOption, setSortOption] = useState<string>(() => {
+    if (typeof window === "undefined") return "default";
+    try { return localStorage.getItem("brainTaskSort") || "default"; } catch { return "default"; }
+  });
   const [uiFilters, setUiFilters] = useState<UIFilters>(() => {
     if (typeof window === "undefined") return { priority: null, category: null, assignee: null, hasDueDate: null };
     try {
@@ -214,12 +223,29 @@ export function TasksView() {
     }
   }, [tasks, editTask]);
 
+  const toggleFocusMode = useCallback(() => {
+    setFocusMode(prev => {
+      const next = !prev;
+      try { localStorage.setItem("brainFocusMode", String(next)); } catch { /* noop */ }
+      return next;
+    });
+  }, []);
+
+  const handleSortChange = useCallback((value: string) => {
+    setSortOption(value);
+    try { localStorage.setItem("brainTaskSort", value); } catch { /* noop */ }
+  }, []);
+
   const handleQuickComplete = useCallback(async (taskId: string) => {
     await moveTask(taskId, 'complete');
+    toast.success(NL.taskCompleted);
   }, [moveTask]);
 
   const handleQuickMove = useCallback(async (taskId: string, newStatus: TaskStatus) => {
     await moveTask(taskId, newStatus);
+    if (newStatus === 'complete') {
+      toast.success(NL.taskCompleted);
+    }
   }, [moveTask]);
 
   const handleQuickAdd = useCallback((status: TaskStatus) => {
@@ -299,16 +325,20 @@ export function TasksView() {
         ) : (
           <>
             <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1">
-                <SearchBar 
-                  value={searchQuery} 
-                  onChange={handleSearchChange} 
-                  placeholder="Zoek taken..." 
-                />
+              <div className="flex-1 flex items-center gap-2">
+                <div className="flex-1">
+                  <SearchBar 
+                    value={searchQuery} 
+                    onChange={handleSearchChange} 
+                    placeholder="Zoek taken..." 
+                  />
+                </div>
+                <SortSelector value={sortOption} onChange={handleSortChange} />
               </div>
               <div className="flex items-center gap-2">
                 <ExportButton tasks={tasks} />
                 <ThemeToggle />
+                <FocusModeButton active={focusMode} onClick={toggleFocusMode} />
                 <AddTaskButton onClick={() => setShowAddForm(true)} />
               </div>
             </div>
@@ -336,8 +366,21 @@ export function TasksView() {
         )}
       </div>
 
-      <TaskStats tasks={tasks} />
-      <ActivityLog tasks={tasks} />
+      {focusMode && (
+        <div className="mx-4 mt-3 flex items-center gap-2 px-3 py-2 bg-[var(--accent)]/10 border border-[var(--accent)]/25 rounded-lg text-sm text-[var(--accent)]">
+          <span>🎯</span>
+          <span className="font-medium">{NL.focusModeActive}</span>
+          <button
+            onClick={toggleFocusMode}
+            className="ml-auto text-xs px-2 py-1 rounded hover:bg-[var(--accent)]/20 transition-colors"
+          >
+            {NL.exitFocusMode}
+          </button>
+        </div>
+      )}
+
+      {!focusMode && <TaskStats tasks={tasks} />}
+      {!focusMode && <ActivityLog tasks={tasks} />}
 
       <ErrorBoundary>
         <TaskBoard
@@ -350,10 +393,12 @@ export function TasksView() {
           onQuickComplete={handleQuickComplete}
           onQuickMove={handleQuickMove}
           onQuickAdd={handleQuickAdd}
+          focusMode={focusMode}
+          globalSort={sortOption}
         />
       </ErrorBoundary>
       
-      {archivedTasks.length > 0 && (
+      {!focusMode && archivedTasks.length > 0 && (
         <ArchivedSection
           tasks={archivedTasks}
           showArchived={showArchived}
@@ -400,6 +445,22 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key`}
         </div>
       </div>
     </div>
+  );
+}
+
+function FocusModeButton({ active, onClick }: { active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1 px-3 py-2 text-sm rounded-lg transition-colors ${
+        active
+          ? "bg-[var(--accent)] text-white"
+          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+      }`}
+      title={active ? NL.exitFocusMode : NL.focusMode}
+    >
+      🎯
+    </button>
   );
 }
 

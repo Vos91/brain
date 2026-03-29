@@ -77,7 +77,16 @@ export const NL = {
   sortPriority: 'Prioriteit',
   sortDueDate: 'Deadline',
   sortNewest: 'Nieuwste eerst',
+  sortUpdated: 'Recent bijgewerkt',
   sortLabel: 'Sorteren',
+
+  // Focus mode
+  focusMode: 'Focus modus',
+  exitFocusMode: 'Focus uit',
+  focusModeActive: 'Focus modus actief',
+
+  // Completion celebration
+  taskCompleted: '✅ Voltooid!',
 
   // Archivering
   archive: 'Archiveren',

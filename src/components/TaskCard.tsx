@@ -189,21 +189,15 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
     >
       {/* Header row: drag handle + title + priority + archive */}
       <div className="flex items-start justify-between gap-2 mb-2">
-        {/* Drag handle - only this triggers drag */}
+        {/* Drag handle - only visible on hover, triggers drag */}
         <button
           ref={setActivatorNodeRef}
           {...listeners}
-          className="flex-shrink-0 p-1 -ml-1 cursor-grab active:cursor-grabbing text-[var(--text-muted)] hover:text-[var(--text-secondary)] touch-none"
+          className="flex-shrink-0 p-1 -ml-1 cursor-grab active:cursor-grabbing text-[var(--text-muted)] hover:text-[var(--text-secondary)] touch-none opacity-0 group-hover:opacity-100 transition-opacity"
           onClick={(e) => e.stopPropagation()}
+          title="Slepen om te verplaatsen"
         >
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <circle cx="9" cy="5" r="1.5" />
-            <circle cx="15" cy="5" r="1.5" />
-            <circle cx="9" cy="12" r="1.5" />
-            <circle cx="15" cy="12" r="1.5" />
-            <circle cx="9" cy="19" r="1.5" />
-            <circle cx="15" cy="19" r="1.5" />
-          </svg>
+          <span className="text-sm leading-none select-none">⠿</span>
         </button>
         {/* Quick complete checkbox */}
         {onQuickComplete && task.status !== "complete" && (

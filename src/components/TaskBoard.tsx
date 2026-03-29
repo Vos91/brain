@@ -11,7 +11,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { Task, TaskStatus } from "@/types";
 import { STATUSES } from "@/lib/constants";
 import { TaskColumn } from "./TaskColumn";
@@ -27,6 +27,8 @@ interface TaskBoardProps {
   onQuickComplete?: (taskId: string) => void;
   onQuickMove?: (taskId: string, newStatus: TaskStatus) => void;
   onQuickAdd?: (status: TaskStatus) => void;
+  focusMode?: boolean;
+  globalSort?: string;
 }
 
 type CollapsedState = Record<'todo' | 'in-progress' | 'complete', boolean>;
@@ -52,7 +54,7 @@ const getInitialColumn = (): number => {
   return 0;
 };
 
-export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArchiveAllComplete, onTitleUpdate, onQuickComplete, onQuickMove, onQuickAdd }: TaskBoardProps) {
+export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArchiveAllComplete, onTitleUpdate, onQuickComplete, onQuickMove, onQuickAdd, focusMode, globalSort }: TaskBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<CollapsedState>(getInitialCollapsed);
   const [activeColumnIndex, setActiveColumnIndex] = useState(getInitialColumn);
@@ -130,9 +132,37 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
     })
   );
 
-  const getTasksByStatus = (status: TaskStatus) => {
-    return tasks.filter((task) => task.status === status);
-  };
+  const PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
+  const applyGlobalSort = useCallback((taskList: Task[]): Task[] => {
+    if (!globalSort || globalSort === "default") return taskList;
+    return [...taskList].sort((a, b) => {
+      switch (globalSort) {
+        case "priority":
+          return (PRIORITY_ORDER[a.priority] ?? 2) - (PRIORITY_ORDER[b.priority] ?? 2);
+        case "due_date": {
+          if (!a.due_date && !b.due_date) return 0;
+          if (!a.due_date) return 1;
+          if (!b.due_date) return -1;
+          return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+        }
+        case "updated":
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        default:
+          return 0;
+      }
+    });
+  }, [globalSort]);
+
+  const getTasksByStatus = useCallback((status: TaskStatus) => {
+    const filtered = tasks.filter((task) => task.status === status);
+    return applyGlobalSort(filtered);
+  }, [tasks, applyGlobalSort]);
+
+  const visibleStatuses = useMemo(() => {
+    if (focusMode) return STATUSES.filter(s => s.id === "in-progress");
+    return STATUSES;
+  }, [focusMode]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const task = tasks.find((t) => t.id === event.active.id);
@@ -164,14 +194,16 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
 
   // Mobile tabbed view
   if (isMobile) {
-    const activeStatus = STATUSES[activeColumnIndex];
+    const effectiveIndex = focusMode ? 0 : activeColumnIndex;
+    const activeStatus = visibleStatuses[Math.min(effectiveIndex, visibleStatuses.length - 1)];
     const activeTasks = getTasksByStatus(activeStatus.id);
 
     return (
       <div className="flex flex-col flex-1 min-h-0 p-4">
         {/* Column tabs */}
+        {!focusMode && (
         <div className="flex bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg mb-3 p-1">
-          {STATUSES.map((status, index) => {
+          {visibleStatuses.map((status, index) => {
             const count = getTasksByStatus(status.id).length;
             return (
               <button
@@ -181,7 +213,7 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
                   flex-1 flex items-center justify-center gap-1.5 py-3 px-2 rounded-md
                   transition-all duration-200 min-h-[48px]
                   ${
-                    activeColumnIndex === index
+                    effectiveIndex === index
                       ? "bg-[var(--accent)] text-white shadow-sm"
                       : "text-[var(--text-muted)] active:bg-[var(--bg-tertiary)]"
                   }
@@ -192,7 +224,7 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
                   className={`
                   text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center
                   ${
-                    activeColumnIndex === index
+                    effectiveIndex === index
                       ? "bg-white/20 text-white"
                       : "bg-[var(--border)] text-[var(--text-muted)]"
                   }
@@ -204,16 +236,18 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
             );
           })}
         </div>
+        )}
 
         {/* Swipe indicator */}
+        {!focusMode && (
         <div className="flex justify-center gap-1.5 mb-3">
-          {STATUSES.map((_, index) => (
+          {visibleStatuses.map((_, index) => (
             <div
               key={index}
               className={`
                 h-1 rounded-full transition-all duration-200
                 ${
-                  activeColumnIndex === index
+                  effectiveIndex === index
                     ? "w-6 bg-[var(--accent)]"
                     : "w-1.5 bg-[var(--border)]"
                 }
@@ -221,6 +255,7 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
             />
           ))}
         </div>
+        )}
 
         {/* Column content with swipe */}
         <DndContext
@@ -263,9 +298,11 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
         </DndContext>
 
         {/* Swipe hint */}
+        {!focusMode && (
         <p className="text-center text-xs text-[var(--text-muted)] mt-2 opacity-60">
           ← Swipe om te wisselen →
         </p>
+        )}
       </div>
     );
   }
@@ -278,8 +315,8 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 p-6 overflow-x-auto h-full">
-        {STATUSES.map((status) => {
+      <div className={`flex gap-4 p-6 overflow-x-auto h-full ${focusMode ? 'justify-center' : ''}`}>
+        {visibleStatuses.map((status) => {
           const statusId = status.id as 'todo' | 'in-progress' | 'complete';
           return (
             <TaskColumn
@@ -289,7 +326,7 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
               emoji={status.emoji}
               tasks={getTasksByStatus(status.id)}
               onTaskClick={onTaskClick}
-              isCollapsed={collapsedColumns[statusId]}
+              isCollapsed={focusMode ? false : collapsedColumns[statusId]}
               onToggleCollapse={() => toggleColumnCollapse(statusId)}
               isMobile={false}
               onArchiveTask={onArchiveTask}
