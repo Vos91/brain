@@ -20,17 +20,47 @@ export function TaskStats({ tasks }: TaskStatsProps) {
     }).length,
   };
 
-  // Weekly completion count (Monday-Sunday)
-  const completedThisWeek = (() => {
+  // Weekly completion count (Monday-Sunday) + previous week for trend
+  const { completedThisWeek, completedLastWeek } = (() => {
     const now = new Date();
     const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ...
     const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToMonday);
     monday.setHours(0, 0, 0, 0);
-    return tasks.filter(t => {
-      if (!t.completed_at) return false;
-      return new Date(t.completed_at) >= monday;
-    }).length;
+    const lastMonday = new Date(monday);
+    lastMonday.setDate(lastMonday.getDate() - 7);
+    
+    let thisWeek = 0;
+    let lastWeek = 0;
+    tasks.forEach(t => {
+      if (!t.completed_at) return;
+      const d = new Date(t.completed_at);
+      if (d >= monday) thisWeek++;
+      else if (d >= lastMonday && d < monday) lastWeek++;
+    });
+    return { completedThisWeek: thisWeek, completedLastWeek: lastWeek };
+  })();
+
+  // Week-over-week trend
+  const weekTrend = (() => {
+    if (completedLastWeek === 0 && completedThisWeek === 0) return 'neutral';
+    if (completedThisWeek > completedLastWeek) return 'up';
+    if (completedThisWeek < completedLastWeek) return 'down';
+    return 'neutral';
+  })();
+
+  // 📋 Global subtask progress
+  const subtaskProgress = (() => {
+    let total = 0;
+    let completed = 0;
+    activeTasks.forEach(t => {
+      if (t.subtasks && t.subtasks.length > 0) {
+        total += t.subtasks.length;
+        completed += t.subtasks.filter(s => s.completed).length;
+      }
+    });
+    if (total === 0) return null;
+    return { completed, total, pct: Math.round((completed / total) * 100) };
   })();
 
   // 🔥 Productivity Streak — consecutive days with at least 1 task completed
@@ -147,6 +177,20 @@ export function TaskStats({ tasks }: TaskStatsProps) {
         <div className="flex items-center gap-1.5 text-[var(--text-muted)]">
           <span>🏆</span>
           <span>{completedThisWeek} {NL.completedThisWeek}</span>
+          {weekTrend === 'up' && (
+            <span className="text-emerald-400 text-[10px] font-bold" title={`Vorige week: ${completedLastWeek}`}>↑</span>
+          )}
+          {weekTrend === 'down' && (
+            <span className="text-rose-400 text-[10px] font-bold" title={`Vorige week: ${completedLastWeek}`}>↓</span>
+          )}
+        </div>
+      )}
+      {/* 📋 Global subtask progress */}
+      {subtaskProgress && (
+        <div className="flex items-center gap-1.5 text-[var(--text-muted)]">
+          <span>☑️</span>
+          <span>{subtaskProgress.completed}/{subtaskProgress.total} subtaken</span>
+          <span className="text-[10px] font-medium text-[var(--text-primary)]">({subtaskProgress.pct}%)</span>
         </div>
       )}
       {/* 🔥 Productivity Streak */}

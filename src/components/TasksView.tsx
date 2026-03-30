@@ -153,16 +153,37 @@ export function TasksView() {
     };
   }, [tasks]);
 
-  // Dynamic page title with open task count
+  // Dynamic page title with open task count + overdue alert
   const openTaskCount = useMemo(
     () => tasks.filter(t => t.status === 'todo' || t.status === 'in-progress').length,
     [tasks]
   );
 
+  const overdueCount = useMemo(
+    () => tasks.filter(t => {
+      if (!t.due_date || t.status === 'complete' || t.status === 'archived') return false;
+      return new Date(t.due_date) < new Date();
+    }).length,
+    [tasks]
+  );
+
   useEffect(() => {
-    document.title = openTaskCount > 0 ? `(${openTaskCount}) 2nd Brain` : '2nd Brain';
-    return () => { document.title = '2nd Brain'; };
-  }, [openTaskCount]);
+    if (overdueCount > 0) {
+      // Pulse between overdue indicator and normal title
+      let showAlert = true;
+      const baseTitle = openTaskCount > 0 ? `(${openTaskCount}) 2nd Brain` : '2nd Brain';
+      const alertTitle = `⚠️ ${overdueCount} te laat — 2nd Brain`;
+      document.title = alertTitle;
+      const interval = setInterval(() => {
+        document.title = showAlert ? baseTitle : alertTitle;
+        showAlert = !showAlert;
+      }, 2000);
+      return () => { clearInterval(interval); document.title = '2nd Brain'; };
+    } else {
+      document.title = openTaskCount > 0 ? `(${openTaskCount}) 2nd Brain` : '2nd Brain';
+      return () => { document.title = '2nd Brain'; };
+    }
+  }, [openTaskCount, overdueCount]);
 
   // Separate active and archived tasks
   const activeTasks = useMemo(() => tasks.filter(t => t.status !== 'archived'), [tasks]);
@@ -316,7 +337,7 @@ export function TasksView() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <KeyboardShortcuts onNewTask={handleNewTaskShortcut} />
+      <KeyboardShortcuts onNewTask={handleNewTaskShortcut} onToggleFocus={toggleFocusMode} />
       <NetworkStatus />
 
       <div className="p-4 pb-0 space-y-3">

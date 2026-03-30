@@ -4,9 +4,10 @@ import { useEffect, useState, useCallback } from "react";
 
 interface KeyboardShortcutsProps {
   onNewTask: () => void;
+  onToggleFocus?: () => void;
 }
 
-export function KeyboardShortcuts({ onNewTask }: KeyboardShortcutsProps) {
+export function KeyboardShortcuts({ onNewTask, onToggleFocus }: KeyboardShortcutsProps) {
   const [showHelp, setShowHelp] = useState(false);
 
   const handleKeyDown = useCallback(
@@ -31,12 +32,18 @@ export function KeyboardShortcuts({ onNewTask }: KeyboardShortcutsProps) {
         onNewTask();
       }
 
+      // F for focus mode
+      if ((e.key === "f" || e.key === "F") && onToggleFocus) {
+        e.preventDefault();
+        onToggleFocus();
+      }
+
       // Escape to close help
       if (e.key === "Escape") {
         setShowHelp(false);
       }
     },
-    [onNewTask]
+    [onNewTask, onToggleFocus]
   );
 
   useEffect(() => {
@@ -71,6 +78,7 @@ export function KeyboardShortcuts({ onNewTask }: KeyboardShortcutsProps) {
 
         <div className="space-y-3">
           <ShortcutRow keys={["N"]} description="Nieuwe taak" />
+          <ShortcutRow keys={["F"]} description="Focus modus" />
           <ShortcutRow keys={["?"]} description="Sneltoetsen tonen" />
           <ShortcutRow keys={["Esc"]} description="Sluiten" />
         </div>
