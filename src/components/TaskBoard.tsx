@@ -159,6 +159,8 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
     return applyGlobalSort(filtered);
   }, [tasks, applyGlobalSort]);
 
+  const totalActiveTasks = useMemo(() => tasks.filter(t => t.status !== "archived").length, [tasks]);
+
   const visibleStatuses = useMemo(() => {
     if (focusMode) return STATUSES.filter(s => s.id === "in-progress");
     return STATUSES;
@@ -285,6 +287,7 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
               onQuickComplete={onQuickComplete}
               onQuickMove={onQuickMove}
               onQuickAdd={onQuickAdd}
+              totalTasks={totalActiveTasks}
             />
           </div>
 
@@ -335,6 +338,7 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
               onQuickComplete={onQuickComplete}
               onQuickMove={onQuickMove}
               onQuickAdd={onQuickAdd}
+              totalTasks={totalActiveTasks}
             />
           );
         })}

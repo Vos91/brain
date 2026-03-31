@@ -80,6 +80,17 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
     }
   };
 
+  // Task age calculation
+  const taskAgeDays = (() => {
+    if (task.status === "complete" || task.status === "archived") return 0;
+    if (!task.created_at) return 0;
+    const now = new Date();
+    const created = new Date(task.created_at);
+    const diffMs = now.getTime() - created.getTime();
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  })();
+  const showTaskAge = taskAgeDays >= 14;
+
   // Stale task calculation
   const staleDays = (() => {
     if (task.status === "complete" || task.status === "archived") return 0;
@@ -353,6 +364,11 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
               title={NL.staleTaskTooltip.replace('{days}', String(staleDays))}
             >
               💤
+            </span>
+          )}
+          {showTaskAge && (
+            <span className="text-[10px] text-[var(--text-muted)] bg-[#1a2129] px-1.5 py-0.5 rounded-lg">
+              📦 {taskAgeDays}d
             </span>
           )}
           {task.due_date && (

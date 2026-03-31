@@ -165,6 +165,12 @@ export const NL = {
   // Activity log
   recentChanges: 'Recente wijzigingen',
   inColumn: 'in',
+
+  // Best productivity day
+  bestDay: 'Beste dag',
+
+  // Task age
+  taskAge: 'oud',
 } as const;
 
 export const ASSIGNEES: { id: Assignee; label: string; emoji: string }[] = [

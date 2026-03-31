@@ -61,6 +61,7 @@ interface TaskColumnProps {
   onQuickComplete?: (taskId: string) => void;
   onQuickMove?: (taskId: string, newStatus: TaskStatus) => void;
   onQuickAdd?: (status: TaskStatus) => void;
+  totalTasks?: number;
 }
 
 const EMPTY_STATE_MESSAGES: Record<string, string> = {
@@ -240,6 +241,7 @@ export function TaskColumn({
   onQuickComplete,
   onQuickMove,
   onQuickAdd,
+  totalTasks = 0,
 }: TaskColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
   const [showAll, setShowAll] = useState(false);
@@ -320,50 +322,63 @@ export function TaskColumn({
       style={{ minWidth: isCollapsed ? 56 : 320, maxWidth: isCollapsed ? 56 : 320 }}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 p-4 border-b border-[var(--border)]">
-        {isCollapsed ? (
-          <button
-            onClick={onToggleCollapse}
-            className="flex items-center justify-center w-full hover:bg-[var(--bg-tertiary)] transition-colors rounded-lg"
-          >
-            <span className="text-lg">{emoji}</span>
-          </button>
-        ) : (
-          <>
+      <div className="border-b border-[var(--border)]">
+        <div className="flex items-center gap-2 p-4">
+          {isCollapsed ? (
             <button
               onClick={onToggleCollapse}
-              className="flex items-center gap-2 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+              className="flex items-center justify-center w-full hover:bg-[var(--bg-tertiary)] transition-colors rounded-lg"
             >
               <span className="text-lg">{emoji}</span>
-              <span className="font-medium text-[var(--text-primary)] whitespace-nowrap">{title}</span>
-              <span className="text-sm text-[var(--text-muted)] bg-[var(--bg-tertiary)] px-2 py-0.5 rounded-full">
-                {sortedTasks.length}
-              </span>
             </button>
-            {onQuickAdd && (
+          ) : (
+            <>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onQuickAdd(id);
-                }}
-                className="p-1 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-tertiary)] rounded transition-colors"
-                title={NL.quickAdd}
+                onClick={onToggleCollapse}
+                className="flex items-center gap-2 flex-1 min-w-0 hover:opacity-80 transition-opacity"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <span className="text-lg">{emoji}</span>
+                <span className="font-medium text-[var(--text-primary)] whitespace-nowrap">{title}</span>
+                <span className="text-sm text-[var(--text-muted)] bg-[var(--bg-tertiary)] px-2 py-0.5 rounded-full">
+                  {sortedTasks.length}
+                </span>
+              </button>
+              {onQuickAdd && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQuickAdd(id);
+                  }}
+                  className="p-1 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-tertiary)] rounded transition-colors"
+                  title={NL.quickAdd}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              )}
+              <SortDropdown columnId={id} sortOption={sortOption} onSortChange={handleSortChange} />
+              <button
+                onClick={onToggleCollapse}
+                className="p-1 hover:bg-[var(--bg-tertiary)] rounded transition-colors"
+              >
+                <svg className="w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
                 </svg>
               </button>
-            )}
-            <SortDropdown columnId={id} sortOption={sortOption} onSortChange={handleSortChange} />
-            <button
-              onClick={onToggleCollapse}
-              className="p-1 hover:bg-[var(--bg-tertiary)] rounded transition-colors"
-            >
-              <svg className="w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-              </svg>
-            </button>
-          </>
+            </>
+          )}
+        </div>
+        {/* Column progress bar */}
+        {!isCollapsed && totalTasks > 0 && sortedTasks.length > 0 && (
+          <div className="px-4 pb-2">
+            <div className="h-0.5 bg-[#1a2129] rounded-full overflow-hidden">
+              <div
+                className="h-0.5 bg-[var(--accent)] rounded-full transition-all duration-300"
+                style={{ width: `${Math.round((sortedTasks.length / totalTasks) * 100)}%` }}
+              />
+            </div>
+          </div>
         )}
       </div>
 

@@ -127,6 +127,27 @@ export function TaskStats({ tasks }: TaskStatsProps) {
     return { today, tomorrow };
   })();
 
+  // 🏅 Best productivity day
+  const bestProductivityDay = (() => {
+    const completedTasks = tasks.filter(t => t.completed_at);
+    if (completedTasks.length < 5) return null;
+    
+    const dayNames = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
+    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+    
+    completedTasks.forEach(t => {
+      const day = new Date(t.completed_at!).getDay();
+      dayCounts[day]++;
+    });
+    
+    let maxIdx = 0;
+    for (let i = 1; i < 7; i++) {
+      if (dayCounts[i] > dayCounts[maxIdx]) maxIdx = i;
+    }
+    
+    return dayNames[maxIdx];
+  })();
+
   // 📊 Average completion time (for tasks completed in last 30 days)
   const avgCompletionDays = (() => {
     const thirtyDaysAgo = new Date();
@@ -227,6 +248,14 @@ export function TaskStats({ tasks }: TaskStatsProps) {
           );
         })}
       </div>
+      {/* 🏅 Best productivity day */}
+      {bestProductivityDay && (
+        <div className="flex items-center gap-1.5 text-[var(--text-muted)] border-l border-[var(--border)] pl-4 ml-1">
+          <span>🏅</span>
+          <span>{NL.bestDay}:</span>
+          <span className="font-medium text-[var(--text-primary)]">{bestProductivityDay}</span>
+        </div>
+      )}
       {/* 📊 Average completion time */}
       {avgCompletionDays !== null && (
         <div className="flex items-center gap-1.5 text-[var(--text-muted)] border-l border-[var(--border)] pl-4 ml-1">
