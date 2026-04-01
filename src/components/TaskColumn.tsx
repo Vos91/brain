@@ -10,6 +10,8 @@ import type { Task, TaskStatus } from "@/types";
 import { TaskCard } from "./TaskCard";
 import { NL } from "@/lib/constants";
 
+const WIP_LIMIT = 5;
+
 type SortOption = "default" | "priority" | "due_date" | "newest";
 
 const SORT_OPTIONS: { id: SortOption; label: string }[] = [
@@ -266,6 +268,7 @@ export function TaskColumn({
 
   const sortedTasks = useMemo(() => sortTasks(tasks, sortOption), [tasks, sortOption]);
 
+  const isWipOver = id === "in-progress" && sortedTasks.length > WIP_LIMIT;
   const isCompleteColumn = id === "complete";
   const hasHiddenTasks = isCompleteColumn && sortedTasks.length > MAX_VISIBLE_COMPLETE;
   const visibleTasks = isCompleteColumn && !showAll 
@@ -318,6 +321,7 @@ export function TaskColumn({
         border border-[var(--border)] transition-all duration-300 ease-in-out overflow-hidden
         ${isCollapsed ? "w-14" : "w-80"}
         ${!isCollapsed && isOver ? "ring-2 ring-[var(--accent)] ring-opacity-50" : ""}
+        ${!isCollapsed && isWipOver ? "ring-1 ring-amber-500/40" : ""}
       `}
       style={{ minWidth: isCollapsed ? 56 : 320, maxWidth: isCollapsed ? 56 : 320 }}
     >
@@ -342,6 +346,11 @@ export function TaskColumn({
                 <span className="text-sm text-[var(--text-muted)] bg-[var(--bg-tertiary)] px-2 py-0.5 rounded-full">
                   {sortedTasks.length}
                 </span>
+                {isWipOver && (
+                  <span className="text-[10px] text-amber-400 font-medium" title={NL.wipWarning}>
+                    ⚠️ WIP: {sortedTasks.length}/{WIP_LIMIT}
+                  </span>
+                )}
               </button>
               {onQuickAdd && (
                 <button

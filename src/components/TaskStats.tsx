@@ -41,6 +41,20 @@ export function TaskStats({ tasks }: TaskStatsProps) {
     return { completedThisWeek: thisWeek, completedLastWeek: lastWeek };
   })();
 
+  // Completed today count
+  const completedToday = (() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    todayStart.setHours(0, 0, 0, 0);
+    let count = 0;
+    tasks.forEach(t => {
+      if (!t.completed_at) return;
+      const d = new Date(t.completed_at);
+      if (d >= todayStart) count++;
+    });
+    return count;
+  })();
+
   // Week-over-week trend
   const weekTrend = (() => {
     if (completedLastWeek === 0 && completedThisWeek === 0) return 'neutral';
@@ -168,6 +182,16 @@ export function TaskStats({ tasks }: TaskStatsProps) {
     return Math.round(avg * 10) / 10;
   })();
 
+  // Priority distribution for active (non-complete) tasks
+  const priorityDist = (() => {
+    const active = activeTasks.filter(t => t.status !== "complete");
+    const high = active.filter(t => t.priority === "high").length;
+    const medium = active.filter(t => t.priority === "medium").length;
+    const low = active.filter(t => t.priority === "low").length;
+    const total = high + medium + low;
+    return { high, medium, low, total };
+  })();
+
   const completionRate = activeTasks.length > 0 
     ? Math.round((stats.complete / activeTasks.length) * 100) 
     : 0;
@@ -204,6 +228,12 @@ export function TaskStats({ tasks }: TaskStatsProps) {
           {weekTrend === 'down' && (
             <span className="text-rose-400 text-[10px] font-bold" title={`Vorige week: ${completedLastWeek}`}>↓</span>
           )}
+        </div>
+      )}
+      {completedToday > 0 && (
+        <div className="flex items-center gap-1.5 text-[var(--text-muted)]">
+          <span>✅</span>
+          <span>{completedToday} {NL.completedToday}</span>
         </div>
       )}
       {/* 📋 Global subtask progress */}
@@ -274,6 +304,32 @@ export function TaskStats({ tasks }: TaskStatsProps) {
           />
         </div>
         <span>{completionRate}%</span>
+        {priorityDist.total > 0 && (
+          <div
+            className="flex h-1.5 rounded-full overflow-hidden"
+            style={{ width: 60 }}
+            title={`Hoog: ${priorityDist.high}, Gemiddeld: ${priorityDist.medium}, Laag: ${priorityDist.low}`}
+          >
+            {priorityDist.high > 0 && (
+              <div
+                className="h-full bg-rose-400"
+                style={{ width: `${(priorityDist.high / priorityDist.total) * 100}%` }}
+              />
+            )}
+            {priorityDist.medium > 0 && (
+              <div
+                className="h-full bg-amber-400"
+                style={{ width: `${(priorityDist.medium / priorityDist.total) * 100}%` }}
+              />
+            )}
+            {priorityDist.low > 0 && (
+              <div
+                className="h-full bg-emerald-400"
+                style={{ width: `${(priorityDist.low / priorityDist.total) * 100}%` }}
+              />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -302,7 +302,7 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
 
       {/* Description */}
       {task.description && (
-        <p className="text-xs text-[--text-muted] mb-3 line-clamp-2 leading-relaxed">
+        <p className="text-xs text-[--text-muted] mb-3 line-clamp-2 leading-relaxed" title={task.description}>
           {task.description}
         </p>
       )}

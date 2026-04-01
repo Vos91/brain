@@ -171,6 +171,12 @@ export const NL = {
 
   // Task age
   taskAge: 'oud',
+
+  // Completed today
+  completedToday: 'vandaag voltooid',
+
+  // WIP limit
+  wipWarning: 'WIP limiet',
 } as const;
 
 export const ASSIGNEES: { id: Assignee; label: string; emoji: string }[] = [
