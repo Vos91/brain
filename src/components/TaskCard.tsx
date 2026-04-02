@@ -146,10 +146,8 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
 
     if (diffDays === 0) return "Vandaag";
     if (diffDays === 1) return "Morgen";
-    if (diffDays === -1) return "Gisteren";
-    if (diffDays > 1 && diffDays <= 7) return `Over ${diffDays} dagen`;
-    if (diffDays < -1 && diffDays >= -7) return `${Math.abs(diffDays)} dagen geleden`;
-    return date.toLocaleDateString("nl-NL", { month: "short", day: "numeric" });
+    // Short NL date format: "2 apr"
+    return `${date.getDate()} ${date.toLocaleDateString("nl-NL", { month: "short" }).replace('.', '')}`;
   };
 
   const getDueStatus = () => {
@@ -374,13 +372,13 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
           {task.due_date && (
             <span
               className={`
-                text-xs px-2.5 py-1 rounded-lg flex items-center gap-1
+                text-xs px-2.5 py-1 rounded-lg flex items-center gap-1 font-medium
                 ${
                   dueStatus === "overdue"
-                    ? "text-rose-400 bg-rose-500/10 border border-rose-500/20 font-medium"
+                    ? "text-rose-400 bg-rose-500/15 border border-rose-500/25"
                     : dueStatus === "soon"
-                    ? "text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium"
-                    : "text-[--text-muted] bg-[#1a2129]"
+                    ? "text-amber-400 bg-amber-500/15 border border-amber-500/25"
+                    : "text-slate-400 bg-slate-500/15 border border-slate-500/25"
                 }
               `}
             >

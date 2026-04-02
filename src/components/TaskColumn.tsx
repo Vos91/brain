@@ -67,9 +67,9 @@ interface TaskColumnProps {
 }
 
 const EMPTY_STATE_MESSAGES: Record<string, string> = {
-  "todo": "📋 Geen taken in de planning",
-  "in-progress": "🚀 Niets in uitvoering — begin met slepen!",
-  "complete": "✨ Nog niets afgerond",
+  "todo": NL.emptyTodo,
+  "in-progress": NL.emptyInProgress,
+  "complete": NL.emptyComplete,
 };
 
 const MAX_VISIBLE_COMPLETE = 5;
@@ -122,6 +122,9 @@ function TaskListContent({
   onTitleUpdate,
   onQuickComplete,
   onQuickMove,
+  selectMode,
+  selectedIds,
+  onToggleSelect,
 }: {
   tasks: Task[];
   visibleTasks: Task[];
@@ -132,11 +135,14 @@ function TaskListContent({
   onTitleUpdate?: (taskId: string, newTitle: string) => void;
   onQuickComplete?: (taskId: string) => void;
   onQuickMove?: (taskId: string, newStatus: TaskStatus) => void;
+  selectMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (taskId: string) => void;
 }) {
   if (tasks.length === 0) {
     return (
-      <div className="text-center py-8 text-[var(--text-muted)] text-sm border-2 border-dashed border-[var(--border)] rounded-xl">
-        <p className="px-4">{EMPTY_STATE_MESSAGES[columnId] || NL.noTasks}</p>
+      <div className="text-center py-10 text-[var(--text-muted)] text-sm border-2 border-dashed border-[var(--border)] rounded-xl">
+        <p className="px-6 italic leading-relaxed">{EMPTY_STATE_MESSAGES[columnId] || NL.noTasks}</p>
       </div>
     );
   }
@@ -144,15 +150,36 @@ function TaskListContent({
   return (
     <>
       {visibleTasks.map((task) => (
-        <TaskCard
-          key={task.id}
-          task={task}
-          onClick={() => onTaskClick(task)}
-          onArchive={isCompleteColumn && onArchiveTask ? () => onArchiveTask(task.id) : undefined}
-          onTitleUpdate={onTitleUpdate}
-          onQuickComplete={onQuickComplete}
-          onQuickMove={onQuickMove}
-        />
+        <div key={task.id} className={selectMode && isCompleteColumn ? "flex items-start gap-2" : ""}>
+          {selectMode && isCompleteColumn && onToggleSelect && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleSelect(task.id); }}
+              className={`
+                flex-shrink-0 mt-4 w-5 h-5 rounded border-2 flex items-center justify-center transition-all
+                ${selectedIds?.has(task.id)
+                  ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                  : "border-[var(--text-muted)] hover:border-[var(--accent)]"
+                }
+              `}
+            >
+              {selectedIds?.has(task.id) && (
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          )}
+          <div className="flex-1 min-w-0">
+            <TaskCard
+              task={task}
+              onClick={() => selectMode && isCompleteColumn && onToggleSelect ? onToggleSelect(task.id) : onTaskClick(task)}
+              onArchive={isCompleteColumn && onArchiveTask && !selectMode ? () => onArchiveTask(task.id) : undefined}
+              onTitleUpdate={selectMode ? undefined : onTitleUpdate}
+              onQuickComplete={selectMode ? undefined : onQuickComplete}
+              onQuickMove={selectMode ? undefined : onQuickMove}
+            />
+          </div>
+        </div>
       ))}
     </>
   );
@@ -248,6 +275,8 @@ export function TaskColumn({
   const { setNodeRef, isOver } = useDroppable({ id });
   const [showAll, setShowAll] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>("default");
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Load sort preference from localStorage
   useEffect(() => {
@@ -268,6 +297,33 @@ export function TaskColumn({
 
   const sortedTasks = useMemo(() => sortTasks(tasks, sortOption), [tasks, sortOption]);
 
+  const toggleSelectMode = () => {
+    if (selectMode) {
+      setSelectedIds(new Set());
+    }
+    setSelectMode(!selectMode);
+  };
+
+  const toggleTaskSelection = (taskId: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(taskId)) {
+        next.delete(taskId);
+      } else {
+        next.add(taskId);
+      }
+      return next;
+    });
+  };
+
+  const handleArchiveSelected = () => {
+    if (onArchiveTask) {
+      selectedIds.forEach(taskId => onArchiveTask(taskId));
+    }
+    setSelectedIds(new Set());
+    setSelectMode(false);
+  };
+
   const isWipOver = id === "in-progress" && sortedTasks.length > WIP_LIMIT;
   const isCompleteColumn = id === "complete";
   const hasHiddenTasks = isCompleteColumn && sortedTasks.length > MAX_VISIBLE_COMPLETE;
@@ -281,16 +337,30 @@ export function TaskColumn({
   if (isMobile) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex items-center justify-end mb-2">
+        <div className="flex items-center justify-end gap-2 mb-2">
+          {isCompleteColumn && tasks.length > 0 && (
+            <button
+              onClick={toggleSelectMode}
+              className={`
+                px-2 py-1 text-xs rounded-md transition-colors
+                ${selectMode
+                  ? "text-[var(--accent)] bg-[var(--accent)]/10 font-medium"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]"
+                }
+              `}
+            >
+              {NL.select}
+            </button>
+          )}
           <SortDropdown columnId={id} sortOption={sortOption} onSortChange={handleSortChange} />
         </div>
-        {showArchiveButton && (
+        {showArchiveButton && !selectMode && (
           <div className="mb-3">
             <ArchiveAllButton onClick={onArchiveAll} size="sm" />
           </div>
         )}
         
-        <div className="space-y-3 pb-4">
+        <div className="space-y-3 pb-4 relative">
           <SortableContext items={visibleTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
             <TaskListContent
               tasks={tasks}
@@ -302,11 +372,26 @@ export function TaskColumn({
               onTitleUpdate={onTitleUpdate}
               onQuickComplete={onQuickComplete}
               onQuickMove={onQuickMove}
+              selectMode={selectMode}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleTaskSelection}
             />
           </SortableContext>
           
           {hasHiddenTasks && (
             <ShowMoreButton showAll={showAll} hiddenCount={hiddenCount} onToggle={() => setShowAll(!showAll)} />
+          )}
+
+          {/* Floating archive button for bulk select (mobile) */}
+          {selectMode && selectedIds.size > 0 && (
+            <div className="sticky bottom-2 pt-2">
+              <button
+                onClick={handleArchiveSelected}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors font-medium shadow-lg shadow-black/30"
+              >
+                📦 Archiveer ({selectedIds.size})
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -352,6 +437,23 @@ export function TaskColumn({
                   </span>
                 )}
               </button>
+              {isCompleteColumn && tasks.length > 0 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSelectMode();
+                  }}
+                  className={`
+                    px-2 py-1 text-xs rounded-md transition-colors
+                    ${selectMode
+                      ? "text-[var(--accent)] bg-[var(--accent)]/10 font-medium"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]"
+                    }
+                  `}
+                >
+                  {NL.select}
+                </button>
+              )}
               {onQuickAdd && (
                 <button
                   onClick={(e) => {
@@ -405,8 +507,8 @@ export function TaskColumn({
           </span>
         </div>
       ) : (
-        <div ref={setNodeRef} className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[200px]">
-          {showArchiveButton && (
+        <div ref={setNodeRef} className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[200px] relative">
+          {showArchiveButton && !selectMode && (
             <div className="mb-2">
               <ArchiveAllButton onClick={onArchiveAll} size="xs" />
             </div>
@@ -423,11 +525,26 @@ export function TaskColumn({
               onTitleUpdate={onTitleUpdate}
               onQuickComplete={onQuickComplete}
               onQuickMove={onQuickMove}
+              selectMode={selectMode}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleTaskSelection}
             />
           </SortableContext>
           
           {hasHiddenTasks && (
             <ShowMoreButton showAll={showAll} hiddenCount={hiddenCount} onToggle={() => setShowAll(!showAll)} />
+          )}
+
+          {/* Floating archive button for bulk select */}
+          {selectMode && selectedIds.size > 0 && (
+            <div className="sticky bottom-2 pt-2">
+              <button
+                onClick={handleArchiveSelected}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors font-medium shadow-lg shadow-black/30"
+              >
+                📦 Archiveer ({selectedIds.size})
+              </button>
+            </div>
           )}
         </div>
       )}

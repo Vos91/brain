@@ -168,20 +168,20 @@ export function TasksView() {
   );
 
   useEffect(() => {
+    const defaultTitle = '🧠 2nd Brain';
     if (overdueCount > 0) {
-      // Pulse between overdue indicator and normal title
       let showAlert = true;
-      const baseTitle = openTaskCount > 0 ? `(${openTaskCount}) 2nd Brain` : '2nd Brain';
-      const alertTitle = `⚠️ ${overdueCount} te laat — 2nd Brain`;
+      const baseTitle = openTaskCount > 0 ? `(${openTaskCount}) ${defaultTitle}` : defaultTitle;
+      const alertTitle = `⚠️ ${overdueCount} te laat — ${defaultTitle}`;
       document.title = alertTitle;
       const interval = setInterval(() => {
         document.title = showAlert ? baseTitle : alertTitle;
         showAlert = !showAlert;
       }, 2000);
-      return () => { clearInterval(interval); document.title = '2nd Brain'; };
+      return () => { clearInterval(interval); document.title = defaultTitle; };
     } else {
-      document.title = openTaskCount > 0 ? `(${openTaskCount}) 2nd Brain` : '2nd Brain';
-      return () => { document.title = '2nd Brain'; };
+      document.title = openTaskCount > 0 ? `(${openTaskCount}) ${defaultTitle}` : defaultTitle;
+      return () => { document.title = defaultTitle; };
     }
   }, [openTaskCount, overdueCount]);
 

@@ -177,6 +177,15 @@ export const NL = {
 
   // WIP limit
   wipWarning: 'WIP limiet',
+
+  // Empty column encouragement
+  emptyTodo: '🎉 Alles opgepakt! Lekker bezig.',
+  emptyInProgress: 'Klaar voor een nieuwe taak? Sleep er eentje hierheen!',
+  emptyComplete: 'Tijd om te scoren! 💪',
+
+  // Bulk select & archive
+  select: 'Selecteer',
+  archiveSelected: 'Archiveer geselecteerde',
 } as const;
 
 export const ASSIGNEES: { id: Assignee; label: string; emoji: string }[] = [
