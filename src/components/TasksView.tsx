@@ -34,6 +34,7 @@ export function TasksView() {
     if (typeof window === "undefined") return false;
     try { return localStorage.getItem("brainFocusMode") === "true"; } catch { return false; }
   });
+  const [priorityFilterActive, setPriorityFilterActive] = useState(false);
   const [sortOption, setSortOption] = useState<string>(() => {
     if (typeof window === "undefined") return "default";
     try { return localStorage.getItem("brainTaskSort") || "default"; } catch { return "default"; }
@@ -293,6 +294,10 @@ export function TasksView() {
     }
   }, [addTask]);
 
+  const togglePriorityFilter = useCallback(() => {
+    setPriorityFilterActive(prev => !prev);
+  }, []);
+
   const handleNewTaskShortcut = useCallback(() => {
     setAddFormInitialStatus("todo");
     setShowAddForm(true);
@@ -337,7 +342,7 @@ export function TasksView() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <KeyboardShortcuts onNewTask={handleNewTaskShortcut} onToggleFocus={toggleFocusMode} />
+      <KeyboardShortcuts onNewTask={handleNewTaskShortcut} onToggleFocus={toggleFocusMode} onTogglePriorityFilter={togglePriorityFilter} />
       <NetworkStatus />
 
       <div className="p-4 pb-0 space-y-3">
@@ -400,6 +405,20 @@ export function TasksView() {
         </div>
       )}
 
+      {priorityFilterActive && (
+        <div className="mx-4 mt-3 flex items-center gap-2 px-3 py-2 bg-rose-500/10 border border-rose-500/25 rounded-lg text-sm text-rose-400">
+          <span>🔥</span>
+          <span className="font-medium">{NL.highPriorityOnly}</span>
+          <kbd className="ml-1 px-1.5 py-0.5 bg-rose-500/10 border border-rose-500/25 rounded text-xs">P</kbd>
+          <button
+            onClick={togglePriorityFilter}
+            className="ml-auto text-xs px-2 py-1 rounded hover:bg-rose-500/20 transition-colors"
+          >
+            Uitschakelen
+          </button>
+        </div>
+      )}
+
       {!focusMode && <TaskStats tasks={tasks} />}
       {!focusMode && <ActivityLog tasks={tasks} />}
 
@@ -416,6 +435,7 @@ export function TasksView() {
           onQuickAdd={handleQuickAdd}
           focusMode={focusMode}
           globalSort={sortOption}
+          priorityFilterActive={priorityFilterActive}
         />
       </ErrorBoundary>
       

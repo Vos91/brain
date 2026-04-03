@@ -16,6 +16,7 @@ import type { Task, TaskStatus } from "@/types";
 import { STATUSES } from "@/lib/constants";
 import { TaskColumn } from "./TaskColumn";
 import { TaskCard } from "./TaskCard";
+import { usePinnedTasks } from "@/hooks/usePinnedTasks";
 
 interface TaskBoardProps {
   tasks: Task[];
@@ -29,6 +30,7 @@ interface TaskBoardProps {
   onQuickAdd?: (status: TaskStatus) => void;
   focusMode?: boolean;
   globalSort?: string;
+  priorityFilterActive?: boolean;
 }
 
 type CollapsedState = Record<'todo' | 'in-progress' | 'complete', boolean>;
@@ -54,8 +56,9 @@ const getInitialColumn = (): number => {
   return 0;
 };
 
-export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArchiveAllComplete, onTitleUpdate, onQuickComplete, onQuickMove, onQuickAdd, focusMode, globalSort }: TaskBoardProps) {
+export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArchiveAllComplete, onTitleUpdate, onQuickComplete, onQuickMove, onQuickAdd, focusMode, globalSort, priorityFilterActive }: TaskBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const { isPinned, togglePin, sortWithPinned } = usePinnedTasks();
   const [collapsedColumns, setCollapsedColumns] = useState<CollapsedState>(getInitialCollapsed);
   const [activeColumnIndex, setActiveColumnIndex] = useState(getInitialColumn);
   const [isMobile, setIsMobile] = useState(false);
@@ -155,9 +158,13 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
   }, [globalSort]);
 
   const getTasksByStatus = useCallback((status: TaskStatus) => {
-    const filtered = tasks.filter((task) => task.status === status);
-    return applyGlobalSort(filtered);
-  }, [tasks, applyGlobalSort]);
+    let filtered = tasks.filter((task) => task.status === status);
+    if (priorityFilterActive) {
+      filtered = filtered.filter((task) => task.priority === "high");
+    }
+    const sorted = applyGlobalSort(filtered);
+    return sortWithPinned(sorted);
+  }, [tasks, applyGlobalSort, priorityFilterActive, sortWithPinned]);
 
   const totalActiveTasks = useMemo(() => tasks.filter(t => t.status !== "archived").length, [tasks]);
 
@@ -288,6 +295,8 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
               onQuickMove={onQuickMove}
               onQuickAdd={onQuickAdd}
               totalTasks={totalActiveTasks}
+              isPinned={isPinned}
+              onTogglePin={togglePin}
             />
           </div>
 
@@ -339,6 +348,8 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
               onQuickMove={onQuickMove}
               onQuickAdd={onQuickAdd}
               totalTasks={totalActiveTasks}
+              isPinned={isPinned}
+              onTogglePin={togglePin}
             />
           );
         })}

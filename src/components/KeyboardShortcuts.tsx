@@ -5,9 +5,10 @@ import { useEffect, useState, useCallback } from "react";
 interface KeyboardShortcutsProps {
   onNewTask: () => void;
   onToggleFocus?: () => void;
+  onTogglePriorityFilter?: () => void;
 }
 
-export function KeyboardShortcuts({ onNewTask, onToggleFocus }: KeyboardShortcutsProps) {
+export function KeyboardShortcuts({ onNewTask, onToggleFocus, onTogglePriorityFilter }: KeyboardShortcutsProps) {
   const [showHelp, setShowHelp] = useState(false);
 
   const handleKeyDown = useCallback(
@@ -38,12 +39,18 @@ export function KeyboardShortcuts({ onNewTask, onToggleFocus }: KeyboardShortcut
         onToggleFocus();
       }
 
+      // P for priority filter
+      if ((e.key === "p" || e.key === "P") && onTogglePriorityFilter) {
+        e.preventDefault();
+        onTogglePriorityFilter();
+      }
+
       // Escape to close help
       if (e.key === "Escape") {
         setShowHelp(false);
       }
     },
-    [onNewTask, onToggleFocus]
+    [onNewTask, onToggleFocus, onTogglePriorityFilter]
   );
 
   useEffect(() => {
@@ -79,6 +86,7 @@ export function KeyboardShortcuts({ onNewTask, onToggleFocus }: KeyboardShortcut
         <div className="space-y-3">
           <ShortcutRow keys={["N"]} description="Nieuwe taak" />
           <ShortcutRow keys={["F"]} description="Focus modus" />
+          <ShortcutRow keys={["P"]} description="Alleen hoge prioriteit" />
           <ShortcutRow keys={["?"]} description="Sneltoetsen tonen" />
           <ShortcutRow keys={["Esc"]} description="Sluiten" />
         </div>

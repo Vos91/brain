@@ -64,6 +64,8 @@ interface TaskColumnProps {
   onQuickMove?: (taskId: string, newStatus: TaskStatus) => void;
   onQuickAdd?: (status: TaskStatus) => void;
   totalTasks?: number;
+  isPinned?: (taskId: string) => boolean;
+  onTogglePin?: (taskId: string) => void;
 }
 
 const EMPTY_STATE_MESSAGES: Record<string, string> = {
@@ -125,6 +127,8 @@ function TaskListContent({
   selectMode,
   selectedIds,
   onToggleSelect,
+  isPinned,
+  onTogglePin,
 }: {
   tasks: Task[];
   visibleTasks: Task[];
@@ -138,6 +142,8 @@ function TaskListContent({
   selectMode?: boolean;
   selectedIds?: Set<string>;
   onToggleSelect?: (taskId: string) => void;
+  isPinned?: (taskId: string) => boolean;
+  onTogglePin?: (taskId: string) => void;
 }) {
   if (tasks.length === 0) {
     return (
@@ -177,6 +183,8 @@ function TaskListContent({
               onTitleUpdate={selectMode ? undefined : onTitleUpdate}
               onQuickComplete={selectMode ? undefined : onQuickComplete}
               onQuickMove={selectMode ? undefined : onQuickMove}
+              isPinned={isPinned?.(task.id)}
+              onTogglePin={selectMode ? undefined : onTogglePin}
             />
           </div>
         </div>
@@ -271,6 +279,8 @@ export function TaskColumn({
   onQuickMove,
   onQuickAdd,
   totalTasks = 0,
+  isPinned,
+  onTogglePin,
 }: TaskColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
   const [showAll, setShowAll] = useState(false);
@@ -375,6 +385,8 @@ export function TaskColumn({
               selectMode={selectMode}
               selectedIds={selectedIds}
               onToggleSelect={toggleTaskSelection}
+              isPinned={isPinned}
+              onTogglePin={onTogglePin}
             />
           </SortableContext>
           
@@ -528,6 +540,8 @@ export function TaskColumn({
               selectMode={selectMode}
               selectedIds={selectedIds}
               onToggleSelect={toggleTaskSelection}
+              isPinned={isPinned}
+              onTogglePin={onTogglePin}
             />
           </SortableContext>
           

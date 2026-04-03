@@ -186,6 +186,20 @@ export const NL = {
   // Bulk select & archive
   select: 'Selecteer',
   archiveSelected: 'Archiveer geselecteerde',
+
+  // Copy task title
+  copied: '📋 Gekopieerd!',
+  copyTitle: 'Titel kopiëren',
+
+  // Time in status
+  timeInStatus: 'in huidige status',
+
+  // Pin/Star
+  pinTask: 'Vastpinnen',
+  unpinTask: 'Losmaken',
+
+  // Priority filter
+  highPriorityOnly: 'Alleen hoge prioriteit',
 } as const;
 
 export const ASSIGNEES: { id: Assignee; label: string; emoji: string }[] = [

@@ -15,6 +15,7 @@ import {
   getTagColorClass,
 } from "@/lib/constants";
 import { spawnConfetti } from "@/lib/confetti";
+import { toast } from "./Toaster";
 
 import type { TaskStatus } from "@/types";
 
@@ -25,9 +26,11 @@ interface TaskCardProps {
   onTitleUpdate?: (taskId: string, newTitle: string) => void;
   onQuickComplete?: (taskId: string) => void;
   onQuickMove?: (taskId: string, newStatus: TaskStatus) => void;
+  isPinned?: boolean;
+  onTogglePin?: (taskId: string) => void;
 }
 
-export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickComplete, onQuickMove }: TaskCardProps) {
+export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickComplete, onQuickMove, isPinned, onTogglePin }: TaskCardProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -101,6 +104,31 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
     return Math.floor(diffMs / (1000 * 60 * 60 * 24));
   })();
   const isStale = staleDays >= 7;
+
+  // Time in current status (based on updated_at)
+  const timeInStatusDays = (() => {
+    if (task.status !== "todo" && task.status !== "in-progress") return 0;
+    if (!task.updated_at) return 0;
+    const now = new Date();
+    const updated = new Date(task.updated_at);
+    const diffMs = now.getTime() - updated.getTime();
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  })();
+  const showTimeInStatus = timeInStatusDays >= 2;
+
+  // Copy title handler
+  const handleCopyTitle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(task.title).then(() => {
+      toast.success(NL.copied);
+    });
+  };
+
+  // Pin toggle handler
+  const handleTogglePin = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onTogglePin?.(task.id);
+  };
 
   // Quick move targets
   const canMoveForward = task.status === "todo" || task.status === "in-progress";
@@ -229,6 +257,24 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
             )}
           </button>
         )}
+        {/* Star/Pin button */}
+        {onTogglePin && (
+          <button
+            onClick={handleTogglePin}
+            className={`
+              flex-shrink-0 p-0.5 transition-all
+              ${isPinned
+                ? "text-amber-400"
+                : "text-[var(--text-muted)] opacity-0 group-hover:opacity-100 hover:text-amber-400"
+              }
+            `}
+            title={isPinned ? NL.unpinTask : NL.pinTask}
+          >
+            <svg className="w-3.5 h-3.5" fill={isPinned ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+          </button>
+        )}
         {isEditingTitle ? (
           <input
             ref={titleInputRef}
@@ -273,6 +319,16 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
               </svg>
             </button>
           )}
+          {/* Copy title button - hidden on mobile */}
+          <button
+            onClick={handleCopyTitle}
+            className="hidden md:flex opacity-0 group-hover:opacity-100 p-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-tertiary)] rounded-lg transition-all"
+            title={NL.copyTitle}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </button>
           {onArchive && (
             <button
               onClick={(e) => {
@@ -362,6 +418,14 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
               title={NL.staleTaskTooltip.replace('{days}', String(staleDays))}
             >
               💤
+            </span>
+          )}
+          {showTimeInStatus && (
+            <span
+              className="text-[10px] text-[var(--text-muted)] bg-[#1a2129] px-1.5 py-0.5 rounded-lg"
+              title={`${timeInStatusDays}d ${NL.timeInStatus}`}
+            >
+              ⏱️ {timeInStatusDays}d
             </span>
           )}
           {showTaskAge && (
