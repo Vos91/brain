@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import type { Task } from "@/types";
 import { ASSIGNEES, NL } from "@/lib/constants";
 
@@ -192,6 +193,34 @@ export function TaskStats({ tasks }: TaskStatsProps) {
     return { high, medium, low, total };
   })();
 
+  // 📅 Week activity dots (Mon-Sun, current week)
+  const weekActivityDots = useMemo(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+
+    const days: { label: string; count: number; isToday: boolean }[] = [];
+    for (let i = 0; i < 7; i++) {
+      const dayStart = new Date(monday);
+      dayStart.setDate(dayStart.getDate() + i);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+
+      let count = 0;
+      tasks.forEach(t => {
+        if (!t.completed_at) return;
+        const d = new Date(t.completed_at);
+        if (d >= dayStart && d < dayEnd) count++;
+      });
+
+      const isToday = i === diffToMonday;
+      days.push({ label: NL.weekDays[i], count, isToday });
+    }
+    return days;
+  }, [tasks]);
+
   const completionRate = activeTasks.length > 0 
     ? Math.round((stats.complete / activeTasks.length) * 100) 
     : 0;
@@ -286,6 +315,29 @@ export function TaskStats({ tasks }: TaskStatsProps) {
           <span className="font-medium text-[var(--text-primary)]">{bestProductivityDay}</span>
         </div>
       )}
+      {/* 📅 Week activity dots */}
+      <div className="flex items-center gap-0.5 border-l border-[var(--border)] pl-4 ml-1" title="Voltooide taken deze week per dag">
+        {weekActivityDots.map((day, i) => (
+          <div key={i} className="flex flex-col items-center gap-0.5">
+            <div
+              className={`
+                w-2.5 h-2.5 rounded-full transition-all
+                ${day.count === 0
+                  ? "bg-[var(--bg-tertiary)]"
+                  : day.count <= 2
+                  ? "bg-emerald-500/60"
+                  : "bg-emerald-400"
+                }
+                ${day.isToday ? "ring-1 ring-[var(--accent)]" : ""}
+              `}
+              title={`${day.label}: ${day.count} voltooid`}
+            />
+            <span className={`text-[8px] leading-none ${day.isToday ? "text-[var(--accent)] font-bold" : "text-[var(--text-muted)]"}`}>
+              {day.label[0]}
+            </span>
+          </div>
+        ))}
+      </div>
       {/* 📊 Average completion time */}
       {avgCompletionDays !== null && (
         <div className="flex items-center gap-1.5 text-[var(--text-muted)] border-l border-[var(--border)] pl-4 ml-1">

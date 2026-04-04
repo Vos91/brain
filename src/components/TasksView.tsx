@@ -35,6 +35,7 @@ export function TasksView() {
     try { return localStorage.getItem("brainFocusMode") === "true"; } catch { return false; }
   });
   const [priorityFilterActive, setPriorityFilterActive] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date());
   const [sortOption, setSortOption] = useState<string>(() => {
     if (typeof window === "undefined") return "default";
     try { return localStorage.getItem("brainTaskSort") || "default"; } catch { return "default"; }
@@ -106,6 +107,13 @@ export function TasksView() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Track last sync time
+  useEffect(() => {
+    if (tasks.length > 0 && !loading) {
+      setLastSyncedAt(new Date());
+    }
+  }, [tasks, loading]);
 
   // Deadline notifications
   useEffect(() => {
@@ -275,6 +283,16 @@ export function TasksView() {
     setShowAddForm(true);
   }, []);
 
+  const handleSnooze = useCallback(async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(23, 59, 0, 0);
+    await editTask({ ...task, due_date: tomorrow.toISOString(), updated_at: new Date().toISOString() });
+    toast.success(NL.snoozed);
+  }, [tasks, editTask]);
+
   const handleDuplicateTask = useCallback(async (task: Task) => {
     const duplicated = {
       title: `${task.title} (kopie)`,
@@ -419,6 +437,7 @@ export function TasksView() {
         </div>
       )}
 
+      {!focusMode && <GreetingBar lastSyncedAt={lastSyncedAt} taskCount={activeTasks.length} />}
       {!focusMode && <TaskStats tasks={tasks} />}
       {!focusMode && <ActivityLog tasks={tasks} />}
 
@@ -433,6 +452,7 @@ export function TasksView() {
           onQuickComplete={handleQuickComplete}
           onQuickMove={handleQuickMove}
           onQuickAdd={handleQuickAdd}
+          onSnooze={handleSnooze}
           focusMode={focusMode}
           globalSort={sortOption}
           priorityFilterActive={priorityFilterActive}
@@ -517,6 +537,43 @@ function AddTaskButton({ onClick }: { onClick: () => void }) {
       {NL.addTask}
       <kbd className="ml-2 px-1.5 py-0.5 bg-white/20 rounded text-xs">N</kbd>
     </button>
+  );
+}
+
+function GreetingBar({ lastSyncedAt, taskCount }: { lastSyncedAt: Date; taskCount: number }) {
+  const [, setTick] = useState(0);
+  
+  // Re-render every minute to update "last synced"
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour < 12) return NL.goodMorning;
+    if (hour >= 12 && hour < 18) return NL.goodAfternoon;
+    if (hour >= 18 && hour < 23) return NL.goodEvening;
+    return NL.goodNight;
+  };
+
+  const getTimeSince = () => {
+    const diffMs = Date.now() - lastSyncedAt.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return NL.justSynced;
+    return `${diffMin} ${NL.minutesAgoShort}`;
+  };
+
+  return (
+    <div className="flex items-center justify-between px-4 py-1.5 text-xs text-[var(--text-muted)]">
+      <span>
+        {getGreeting()} 👋 — <span className="font-medium text-[var(--text-secondary)]">{taskCount}</span> actieve taken
+      </span>
+      <span className="flex items-center gap-1 opacity-60">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        {NL.lastSynced} {getTimeSince()}
+      </span>
+    </div>
   );
 }
 

@@ -200,6 +200,24 @@ export const NL = {
 
   // Priority filter
   highPriorityOnly: 'Alleen hoge prioriteit',
+
+  // Snooze
+  snoozeOneDay: '+1 dag',
+  snoozed: '⏰ Deadline verschoven naar morgen',
+
+  // Week activity
+  weekDays: ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'],
+
+  // Greeting
+  goodMorning: 'Goedemorgen',
+  goodAfternoon: 'Goedemiddag',
+  goodEvening: 'Goedenavond',
+  goodNight: 'Goedenacht',
+
+  // Last synced
+  lastSynced: 'Gesynchroniseerd',
+  justSynced: 'Zojuist',
+  minutesAgoShort: 'min geleden',
 } as const;
 
 export const ASSIGNEES: { id: Assignee; label: string; emoji: string }[] = [

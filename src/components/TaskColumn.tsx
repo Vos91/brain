@@ -63,6 +63,7 @@ interface TaskColumnProps {
   onQuickComplete?: (taskId: string) => void;
   onQuickMove?: (taskId: string, newStatus: TaskStatus) => void;
   onQuickAdd?: (status: TaskStatus) => void;
+  onSnooze?: (taskId: string) => void;
   totalTasks?: number;
   isPinned?: (taskId: string) => boolean;
   onTogglePin?: (taskId: string) => void;
@@ -124,6 +125,7 @@ function TaskListContent({
   onTitleUpdate,
   onQuickComplete,
   onQuickMove,
+  onSnooze,
   selectMode,
   selectedIds,
   onToggleSelect,
@@ -139,6 +141,7 @@ function TaskListContent({
   onTitleUpdate?: (taskId: string, newTitle: string) => void;
   onQuickComplete?: (taskId: string) => void;
   onQuickMove?: (taskId: string, newStatus: TaskStatus) => void;
+  onSnooze?: (taskId: string) => void;
   selectMode?: boolean;
   selectedIds?: Set<string>;
   onToggleSelect?: (taskId: string) => void;
@@ -183,6 +186,7 @@ function TaskListContent({
               onTitleUpdate={selectMode ? undefined : onTitleUpdate}
               onQuickComplete={selectMode ? undefined : onQuickComplete}
               onQuickMove={selectMode ? undefined : onQuickMove}
+              onSnooze={selectMode ? undefined : onSnooze}
               isPinned={isPinned?.(task.id)}
               onTogglePin={selectMode ? undefined : onTogglePin}
             />
@@ -278,6 +282,7 @@ export function TaskColumn({
   onQuickComplete,
   onQuickMove,
   onQuickAdd,
+  onSnooze,
   totalTasks = 0,
   isPinned,
   onTogglePin,
@@ -382,6 +387,7 @@ export function TaskColumn({
               onTitleUpdate={onTitleUpdate}
               onQuickComplete={onQuickComplete}
               onQuickMove={onQuickMove}
+              onSnooze={onSnooze}
               selectMode={selectMode}
               selectedIds={selectedIds}
               onToggleSelect={toggleTaskSelection}
@@ -537,6 +543,7 @@ export function TaskColumn({
               onTitleUpdate={onTitleUpdate}
               onQuickComplete={onQuickComplete}
               onQuickMove={onQuickMove}
+              onSnooze={onSnooze}
               selectMode={selectMode}
               selectedIds={selectedIds}
               onToggleSelect={toggleTaskSelection}

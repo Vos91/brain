@@ -28,6 +28,7 @@ interface TaskBoardProps {
   onQuickComplete?: (taskId: string) => void;
   onQuickMove?: (taskId: string, newStatus: TaskStatus) => void;
   onQuickAdd?: (status: TaskStatus) => void;
+  onSnooze?: (taskId: string) => void;
   focusMode?: boolean;
   globalSort?: string;
   priorityFilterActive?: boolean;
@@ -56,7 +57,7 @@ const getInitialColumn = (): number => {
   return 0;
 };
 
-export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArchiveAllComplete, onTitleUpdate, onQuickComplete, onQuickMove, onQuickAdd, focusMode, globalSort, priorityFilterActive }: TaskBoardProps) {
+export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArchiveAllComplete, onTitleUpdate, onQuickComplete, onQuickMove, onQuickAdd, onSnooze, focusMode, globalSort, priorityFilterActive }: TaskBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const { isPinned, togglePin, sortWithPinned } = usePinnedTasks();
   const [collapsedColumns, setCollapsedColumns] = useState<CollapsedState>(getInitialCollapsed);
@@ -294,6 +295,7 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
               onQuickComplete={onQuickComplete}
               onQuickMove={onQuickMove}
               onQuickAdd={onQuickAdd}
+              onSnooze={onSnooze}
               totalTasks={totalActiveTasks}
               isPinned={isPinned}
               onTogglePin={togglePin}
@@ -347,6 +349,7 @@ export function TaskBoard({ tasks, onMoveTask, onTaskClick, onArchiveTask, onArc
               onQuickComplete={onQuickComplete}
               onQuickMove={onQuickMove}
               onQuickAdd={onQuickAdd}
+              onSnooze={onSnooze}
               totalTasks={totalActiveTasks}
               isPinned={isPinned}
               onTogglePin={togglePin}

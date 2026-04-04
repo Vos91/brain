@@ -26,11 +26,12 @@ interface TaskCardProps {
   onTitleUpdate?: (taskId: string, newTitle: string) => void;
   onQuickComplete?: (taskId: string) => void;
   onQuickMove?: (taskId: string, newStatus: TaskStatus) => void;
+  onSnooze?: (taskId: string) => void;
   isPinned?: boolean;
   onTogglePin?: (taskId: string) => void;
 }
 
-export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickComplete, onQuickMove, isPinned, onTogglePin }: TaskCardProps) {
+export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickComplete, onQuickMove, onSnooze, isPinned, onTogglePin }: TaskCardProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -128,6 +129,12 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
   const handleTogglePin = (e: React.MouseEvent) => {
     e.stopPropagation();
     onTogglePin?.(task.id);
+  };
+
+  // Snooze handler (push deadline +1 day)
+  const handleSnooze = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onSnooze?.(task.id);
   };
 
   // Quick move targets
@@ -448,6 +455,15 @@ export function TaskCard({ task, onClick, onArchive, onTitleUpdate, onQuickCompl
             >
               📅 {formatDate(task.due_date)}
               {dueStatus === "overdue" && <span className="due-badge due-badge-overdue ml-1">Te laat</span>}
+              {dueStatus === "overdue" && onSnooze && (
+                <button
+                  onClick={handleSnooze}
+                  className="ml-1 px-1.5 py-0.5 text-[10px] font-medium bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded transition-colors"
+                  title={NL.snoozeOneDay}
+                >
+                  {NL.snoozeOneDay}
+                </button>
+              )}
               {dueStatus === "soon" && <span className="due-badge due-badge-warning ml-1">Bijna</span>}
             </span>
           )}
